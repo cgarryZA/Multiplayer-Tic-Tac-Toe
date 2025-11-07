@@ -1,8 +1,7 @@
 #include <iostream>
-#include <array>
 #include <vector>
-
-constexpr std::array<char, 5> SYMBOLS{'X', 'Y', 'Z', 'A', 'B'};
+#include <random>
+#include <algorithm>
 
 struct Board
 {
@@ -23,35 +22,44 @@ std::size_t boardSize(std::size_t numPlayers)
     return numPlayers + 1;
 }
 
-char nextSymbol(int playerIndex)
-{
-    return SYMBOLS[playerIndex];
-}
-
 void initBoard(Board &b, std::size_t newSize) 
 {
     b.size = newSize;
     b.cells.assign(b.size, std::vector<char>(b.size, ' '));
 }
 
+std::vector<char> generateRandomSymbols(int count)
+{
+    std::vector<char> pool;
+    for (int c = 33; c <= 126; ++c)
+    {
+        char ch = static_cast<char>(c);
+        if (ch == '|' || ch == '+' || ch == ' ')
+        {
+            continue;
+        }
+        pool.push_back(ch);
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(pool.begin(), pool.end(), gen);
+
+    if (count > (int)pool.size())
+    {
+        count = (int)pool.size();
+    }
+
+    return std::vector<char>(pool.begin(), pool.begin() + count);
+}
+
+
 void initgame(int playerCount, GameState &gs)
 {
-    gs.players.clear();
-
-    if (playerCount > (int)SYMBOLS.size())
-    {
-        playerCount = (int)SYMBOLS.size();
-    }
-
-    for (int i = 0; i < playerCount; ++i)
-    {
-        gs.players.push_back(nextSymbol(i));
-    }
-    
+    gs.players = generateRandomSymbols(playerCount);
     gs.currentPlayer = 0;
 
     std::size_t size = boardSize(gs.players.size());
-
     initBoard(gs.board, size);
 }
 
@@ -221,10 +229,6 @@ int main() {
     if (playerCount < 2)
     {
         playerCount = 2;
-    }
-    if (playerCount > (int)SYMBOLS.size())
-    {
-        playerCount = (int)SYMBOLS.size();
     }
 
     initgame(playerCount, game);
