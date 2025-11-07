@@ -9,7 +9,7 @@
 #include "board.h"
 #include "net.h"
 
-// ----- win check (same as before) -----
+// ---------- win check ----------
 char checkWinner(const Board& b)
 {
     std::size_t size = b.getSize();
@@ -59,15 +59,15 @@ char checkWinner(const Board& b)
     return ' ';
 }
 
-// give each player a symbol: server=first
+// ---------- symbols ----------
 std::vector<char> generateSymbols(std::size_t count)
 {
     std::vector<char> result;
     if (count == 0) return result;
 
-    result.push_back('X');         // server
+    result.push_back('X');               // host
     if (count == 1) return result;
-    result.push_back('O');         // first client
+    result.push_back('O');               // first client
 
     std::vector<char> pool;
     for (int c = 33; c <= 126; ++c) {
@@ -84,9 +84,33 @@ std::vector<char> generateSymbols(std::size_t count)
 
 void broadcast(const std::vector<SOCKET>& clients, const std::string& line)
 {
-    for (SOCKET s : clients) {
+    for (SOCKET s : clients)
         send_line(s, line);
+}
+
+// helper to create a listening socket
+SOCKET make_listen_socket()
+{
+    SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listenSock == INVALID_SOCKET)
+        return INVALID_SOCKET;
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port   = htons(5000);
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+        closesocket(listenSock);
+        return INVALID_SOCKET;
     }
+
+    if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR) {
+        closesocket(listenSock);
+        return INVALID_SOCKET;
+    }
+
+    return listenSock;
 }
 
 int main()
@@ -96,43 +120,26 @@ int main()
         return 1;
     }
 
-    SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET listenSock = make_listen_socket();
     if (listenSock == INVALID_SOCKET) {
-        std::cerr << "socket failed\n";
-        return 1;
-    }
-
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(5000);
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(listenSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
-        std::cerr << "bind failed\n";
-        closesocket(listenSock);
-        return 1;
-    }
-
-    if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "listen failed\n";
-        closesocket(listenSock);
+        std::cerr << "failed to listen on 5000\n";
         return 1;
     }
 
     std::cout << "Server listening on port 5000.\n";
 
-    // shared lobby state
     std::vector<SOCKET> clients;
-    std::mutex clientsMutex;
-    std::atomic<bool> stopAccept{false};
+    std::mutex          clientsMutex;
+    std::atomic<bool>   stopAccept{false};
 
-    // accept thread
-    auto start_accepting = [&](void) {
-        return std::thread([&](){
+    // accept thread lambda
+    auto start_accepting = [&](SOCKET ls) {
+        return std::thread([&]() {
             while (!stopAccept.load()) {
-                SOCKET cs = accept(listenSock, nullptr, nullptr);
+                SOCKET cs = accept(ls, nullptr, nullptr);
                 if (cs == INVALID_SOCKET) {
-                    continue;
+                    // this happens when we close(ls) to break accept
+                    break;
                 }
                 {
                     std::lock_guard<std::mutex> lock(clientsMutex);
@@ -143,9 +150,8 @@ int main()
         });
     };
 
-    std::thread acceptThread = start_accepting();
+    std::thread acceptThread = start_accepting(listenSock);
 
-    // main loop: lobby -> game -> lobby ...
     while (true)
     {
         // ----- LOBBY -----
@@ -153,9 +159,8 @@ int main()
 
         std::string cmd;
         std::getline(std::cin, cmd);
-        if (!std::cin) break;            // stdin closed
+        if (!std::cin) break;
 
-        // ignore empty lines so we don't auto-start
         if (cmd.empty())
             continue;
 
@@ -170,45 +175,42 @@ int main()
             continue;
         }
 
-        // host typed "start" -> freeze lobby
+        // ====== START GAME ======
+        // stop accepting: close the listening socket to unblock accept()
         stopAccept.store(true);
+        closesocket(listenSock);           // this wakes the accept thread
         if (acceptThread.joinable())
             acceptThread.join();
 
-        // snapshot current clients
+        // snapshot clients
         std::vector<SOCKET> gameClients;
         {
             std::lock_guard<std::mutex> lock(clientsMutex);
             gameClients = clients;
         }
 
-        std::size_t numPlayers = 1 + gameClients.size();   // host + remotes
+        std::size_t numPlayers = 1 + gameClients.size();
         std::vector<char> symbols = generateSymbols(numPlayers);
         std::size_t boardSize = numPlayers + 1;
 
-        // tell each client the game is starting
+        // tell clients their start info
         for (std::size_t i = 0; i < gameClients.size(); ++i) {
-            char theirSymbol = symbols[i + 1];  // 0 is server
+            char sym = symbols[i + 1]; // 0 is host
             send_line(gameClients[i],
-                      "START " + std::to_string(boardSize) + " " + std::string(1, theirSymbol));
+                      "START " + std::to_string(boardSize) + " " + std::string(1, sym));
         }
 
-        // ----- GAME -----
+        // ----- GAME PHASE -----
         Board board(boardSize);
         bool gameOver = false;
         std::size_t currentPlayer = 0;
-
-        // (optional) scoreboard for this run
-        std::vector<int> wins(numPlayers, 0);
-        int draws = 0;
 
         while (!gameOver)
         {
             board.print();
             char sym = symbols[currentPlayer];
 
-            if (currentPlayer == 0)
-            {
+            if (currentPlayer == 0) {
                 // host turn
                 std::cout << "Your move (x y): ";
                 int x, y;
@@ -217,7 +219,6 @@ int main()
                     gameOver = true;
                     break;
                 }
-                // eat newline for next getline
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
                 if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize) {
@@ -232,28 +233,27 @@ int main()
                 board.set(x, y, sym);
                 broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + sym);
             }
-            else
-            {
+            else {
                 // remote player's turn
                 SOCKET s = gameClients[currentPlayer - 1];
                 send_line(s, "YOUR_TURN");
 
                 std::string line;
                 if (!recv_line(s, line)) {
-                    std::cout << "Player " << currentPlayer << " disconnected.\n";
+                    std::cout << "player " << currentPlayer << " disconnected.\n";
                     gameOver = true;
                     break;
                 }
 
                 int x, y;
                 if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) != 2) {
-                    std::cout << "Bad MOVE from client.\n";
+                    std::cout << "bad move from client.\n";
                     gameOver = true;
                     break;
                 }
 
                 if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize || board.get(x, y) != ' ') {
-                    std::cout << "Client sent invalid move.\n";
+                    std::cout << "client sent invalid move.\n";
                     gameOver = true;
                     break;
                 }
@@ -262,51 +262,33 @@ int main()
                 broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + sym);
             }
 
-            // check end
             char w = checkWinner(board);
-            if (w != ' ')
-            {
-                std::size_t idx = std::distance(symbols.begin(),
-                                                std::find(symbols.begin(), symbols.end(), w));
-                if (idx < wins.size()) wins[idx]++;
-
+            if (w != ' ') {
                 board.print();
                 std::cout << "Player " << w << " wins!\n";
                 broadcast(gameClients, std::string("RESULT WIN ") + w);
                 broadcast(gameClients, "RESET");
-
-                std::cout << "Scoreboard:\n";
-                for (std::size_t i = 0; i < symbols.size(); ++i)
-                    std::cout << "  " << symbols[i] << ": " << wins[i] << "\n";
-                std::cout << "  draws: " << draws << "\n";
-
                 gameOver = true;
-            }
-            else if (board.isFull())
-            {
-                draws++;
+            } else if (board.isFull()) {
                 board.print();
                 std::cout << "It's a draw.\n";
                 broadcast(gameClients, "RESULT DRAW");
                 broadcast(gameClients, "RESET");
-
-                std::cout << "Scoreboard:\n";
-                for (std::size_t i = 0; i < symbols.size(); ++i)
-                    std::cout << "  " << symbols[i] << ": " << wins[i] << "\n";
-                std::cout << "  draws: " << draws << "\n";
-
                 gameOver = true;
             }
 
-            if (!gameOver) {
+            if (!gameOver)
                 currentPlayer = (currentPlayer + 1) % numPlayers;
-            }
         }
 
-        // ----- back to lobby -----
+        // ----- back to lobby: recreate listen socket and accept -----
+        listenSock = make_listen_socket();
+        if (listenSock == INVALID_SOCKET) {
+            std::cerr << "failed to re-open listen socket\n";
+            break;
+        }
         stopAccept.store(false);
-        acceptThread = start_accepting();
-        // next loop iteration shows lobby again
+        acceptThread = start_accepting(listenSock);
     }
 
     // cleanup
