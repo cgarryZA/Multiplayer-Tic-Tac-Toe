@@ -5,18 +5,17 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
+#include <limits>
 #include "board.h"
 #include "net.h"
 
-// ====== helpers from your earlier code ======
-
+// ----- win check (same as before) -----
 char checkWinner(const Board& b)
 {
     std::size_t size = b.getSize();
 
     // rows
-    for (std::size_t y = 0; y < size; ++y)
-    {
+    for (std::size_t y = 0; y < size; ++y) {
         char first = b.get(0, y);
         if (first == ' ') continue;
         bool allSame = true;
@@ -26,8 +25,7 @@ char checkWinner(const Board& b)
     }
 
     // columns
-    for (std::size_t x = 0; x < size; ++x)
-    {
+    for (std::size_t x = 0; x < size; ++x) {
         char first = b.get(x, 0);
         if (first == ' ') continue;
         bool allSame = true;
@@ -39,8 +37,7 @@ char checkWinner(const Board& b)
     // main diag
     {
         char first = b.get(0, 0);
-        if (first != ' ')
-        {
+        if (first != ' ') {
             bool allSame = true;
             for (std::size_t i = 1; i < size; ++i)
                 if (b.get(i, i) != first) { allSame = false; break; }
@@ -51,8 +48,7 @@ char checkWinner(const Board& b)
     // anti diag
     {
         char first = b.get(size - 1, 0);
-        if (first != ' ')
-        {
+        if (first != ' ') {
             bool allSame = true;
             for (std::size_t i = 1; i < size; ++i)
                 if (b.get(size - 1 - i, i) != first) { allSame = false; break; }
@@ -63,37 +59,32 @@ char checkWinner(const Board& b)
     return ' ';
 }
 
-// generate a list of symbols: X, O, then ASCII that is not awful
+// give each player a symbol: server=first
 std::vector<char> generateSymbols(std::size_t count)
 {
     std::vector<char> result;
     if (count == 0) return result;
 
-    result.push_back('X');
+    result.push_back('X');         // server
     if (count == 1) return result;
-    result.push_back('O');
+    result.push_back('O');         // first client
 
     std::vector<char> pool;
-    for (int c = 33; c <= 126; ++c)
-    {
+    for (int c = 33; c <= 126; ++c) {
         char ch = static_cast<char>(c);
         if (ch == '|' || ch == '+' || ch == '-' || ch == ' ') continue;
         if (ch == 'X' || ch == 'O') continue;
         pool.push_back(ch);
     }
-
-    // just take from the pool in order
     for (std::size_t i = 0; i + 2 < count && i < pool.size(); ++i)
         result.push_back(pool[i]);
 
     return result;
 }
 
-// broadcast helper
 void broadcast(const std::vector<SOCKET>& clients, const std::string& line)
 {
-    for (SOCKET s : clients)
-    {
+    for (SOCKET s : clients) {
         send_line(s, line);
     }
 }
@@ -130,219 +121,192 @@ int main()
 
     std::cout << "Server listening on port 5000.\n";
 
-    // lobby state
+    // shared lobby state
     std::vector<SOCKET> clients;
     std::mutex clientsMutex;
-    std::atomic<bool> startGame{false};
     std::atomic<bool> stopAccept{false};
 
-    // accept thread: keeps accepting until we say stop
-    std::thread acceptThread([&](){
-        while (!stopAccept.load())
-        {
-            SOCKET cs = accept(listenSock, nullptr, nullptr);
-            if (cs == INVALID_SOCKET) {
-                // could be interrupted, just continue
-                continue;
+    // accept thread
+    auto start_accepting = [&](void) {
+        return std::thread([&](){
+            while (!stopAccept.load()) {
+                SOCKET cs = accept(listenSock, nullptr, nullptr);
+                if (cs == INVALID_SOCKET) {
+                    continue;
+                }
+                {
+                    std::lock_guard<std::mutex> lock(clientsMutex);
+                    clients.push_back(cs);
+                    std::cout << "[lobby] client joined. total = " << clients.size() << "\n";
+                }
             }
-            {
-                std::lock_guard<std::mutex> lock(clientsMutex);
-                clients.push_back(cs);
-                std::cout << "Client connected. Total: " << clients.size() << "\n";
-            }
-        }
-    });
+        });
+    };
 
-    // main loop: lobby → game → lobby ...
+    std::thread acceptThread = start_accepting();
+
+    // main loop: lobby -> game -> lobby ...
     while (true)
     {
-        // LOBBY PHASE
-        std::cout << "Lobby: type 'start' to begin with current players (" 
-                  << "[host] + " << clients.size() << " remote)." << std::endl;
-        std::cout << "You can just wait here while people connect." << std::endl;
+        // ----- LOBBY -----
+        std::cout << "\n[lobby] type 'start' to begin, or 'list' to see players.\n";
 
         std::string cmd;
         std::getline(std::cin, cmd);
-        if (!std::cin) break;
-        if (cmd == "start")
+        if (!std::cin) break;            // stdin closed
+
+        // ignore empty lines so we don't auto-start
+        if (cmd.empty())
+            continue;
+
+        if (cmd == "list") {
+            std::lock_guard<std::mutex> lock(clientsMutex);
+            std::cout << "[lobby] host + " << clients.size() << " client(s)\n";
+            continue;
+        }
+
+        if (cmd != "start") {
+            std::cout << "[lobby] unknown command\n";
+            continue;
+        }
+
+        // host typed "start" -> freeze lobby
+        stopAccept.store(true);
+        if (acceptThread.joinable())
+            acceptThread.join();
+
+        // snapshot current clients
+        std::vector<SOCKET> gameClients;
         {
-            // stop accepting new players
-            stopAccept.store(true);
-            // wait for the accept thread to finish
-            if (acceptThread.joinable())
-                acceptThread.join();
+            std::lock_guard<std::mutex> lock(clientsMutex);
+            gameClients = clients;
+        }
 
-            // snapshot client list
-            std::vector<SOCKET> gameClients;
+        std::size_t numPlayers = 1 + gameClients.size();   // host + remotes
+        std::vector<char> symbols = generateSymbols(numPlayers);
+        std::size_t boardSize = numPlayers + 1;
+
+        // tell each client the game is starting
+        for (std::size_t i = 0; i < gameClients.size(); ++i) {
+            char theirSymbol = symbols[i + 1];  // 0 is server
+            send_line(gameClients[i],
+                      "START " + std::to_string(boardSize) + " " + std::string(1, theirSymbol));
+        }
+
+        // ----- GAME -----
+        Board board(boardSize);
+        bool gameOver = false;
+        std::size_t currentPlayer = 0;
+
+        // (optional) scoreboard for this run
+        std::vector<int> wins(numPlayers, 0);
+        int draws = 0;
+
+        while (!gameOver)
+        {
+            board.print();
+            char sym = symbols[currentPlayer];
+
+            if (currentPlayer == 0)
             {
-                std::lock_guard<std::mutex> lock(clientsMutex);
-                gameClients = clients;
+                // host turn
+                std::cout << "Your move (x y): ";
+                int x, y;
+                if (!(std::cin >> x >> y)) {
+                    std::cout << "Input ended.\n";
+                    gameOver = true;
+                    break;
+                }
+                // eat newline for next getline
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize) {
+                    std::cout << "Invalid move.\n";
+                    continue;
+                }
+                if (board.get(x, y) != ' ') {
+                    std::cout << "That cell is taken.\n";
+                    continue;
+                }
+
+                board.set(x, y, sym);
+                broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + sym);
+            }
+            else
+            {
+                // remote player's turn
+                SOCKET s = gameClients[currentPlayer - 1];
+                send_line(s, "YOUR_TURN");
+
+                std::string line;
+                if (!recv_line(s, line)) {
+                    std::cout << "Player " << currentPlayer << " disconnected.\n";
+                    gameOver = true;
+                    break;
+                }
+
+                int x, y;
+                if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) != 2) {
+                    std::cout << "Bad MOVE from client.\n";
+                    gameOver = true;
+                    break;
+                }
+
+                if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize || board.get(x, y) != ' ') {
+                    std::cout << "Client sent invalid move.\n";
+                    gameOver = true;
+                    break;
+                }
+
+                board.set(x, y, sym);
+                broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + sym);
             }
 
-            // number of players = server + remote clients
-            std::size_t numPlayers = 1 + gameClients.size();
-            std::vector<char> symbols = generateSymbols(numPlayers);
-            std::size_t boardSize = numPlayers + 1;
-
-            // tell every client their START info
-            for (std::size_t i = 0; i < gameClients.size(); ++i)
+            // check end
+            char w = checkWinner(board);
+            if (w != ' ')
             {
-                char mySym = symbols[i + 1]; // 0 = server
-                send_line(gameClients[i], "START " + std::to_string(boardSize) + " " + std::string(1, mySym));
-            }
+                std::size_t idx = std::distance(symbols.begin(),
+                                                std::find(symbols.begin(), symbols.end(), w));
+                if (idx < wins.size()) wins[idx]++;
 
-            // now run the game
-            Board board(boardSize);
-            bool gameOver = false;
-            std::size_t currentPlayer = 0; // 0 = server
-
-            // simple scoreboard just for this session
-            std::vector<int> wins(numPlayers, 0);
-            int draws = 0;
-
-            while (!gameOver)
-            {
                 board.print();
-                char currentSymbol = symbols[currentPlayer];
+                std::cout << "Player " << w << " wins!\n";
+                broadcast(gameClients, std::string("RESULT WIN ") + w);
+                broadcast(gameClients, "RESET");
 
-                if (currentPlayer == 0)
-                {
-                    // server's turn (read from console)
-                    std::cout << "Your move (x y): ";
-                    int x, y;
-                    if (!(std::cin >> x >> y)) {
-                        std::cout << "Input ended.\n";
-                        gameOver = true;
-                        break;
-                    }
-                    // eat leftover newline for next getline later
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Scoreboard:\n";
+                for (std::size_t i = 0; i < symbols.size(); ++i)
+                    std::cout << "  " << symbols[i] << ": " << wins[i] << "\n";
+                std::cout << "  draws: " << draws << "\n";
 
-                    if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize)
-                    {
-                        std::cout << "Invalid move, try again.\n";
-                        continue;
-                    }
-                    if (board.get(x, y) != ' ')
-                    {
-                        std::cout << "That cell is taken.\n";
-                        continue;
-                    }
+                gameOver = true;
+            }
+            else if (board.isFull())
+            {
+                draws++;
+                board.print();
+                std::cout << "It's a draw.\n";
+                broadcast(gameClients, "RESULT DRAW");
+                broadcast(gameClients, "RESET");
 
-                    board.set(x, y, currentSymbol);
+                std::cout << "Scoreboard:\n";
+                for (std::size_t i = 0; i < symbols.size(); ++i)
+                    std::cout << "  " << symbols[i] << ": " << wins[i] << "\n";
+                std::cout << "  draws: " << draws << "\n";
 
-                    // broadcast to all clients: MOVE x y S
-                    broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + currentSymbol);
-                }
-                else
-                {
-                    // remote player's turn
-                    SOCKET theirSock = gameClients[currentPlayer - 1];
+                gameOver = true;
+            }
 
-                    // tell only that client it's their turn
-                    send_line(theirSock, "YOUR_TURN");
-
-                    // receive their move
-                    std::string line;
-                    if (!recv_line(theirSock, line)) {
-                        std::cout << "Player " << currentPlayer << " disconnected.\n";
-                        gameOver = true;
-                        break;
-                    }
-
-                    int x, y;
-                    if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) != 2)
-                    {
-                        std::cout << "Bad move from client.\n";
-                        gameOver = true;
-                        break;
-                    }
-
-                    // apply
-                    if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize || board.get(x, y) != ' ')
-                    {
-                        std::cout << "Client sent invalid move.\n";
-                        gameOver = true;
-                        break;
-                    }
-                    board.set(x, y, currentSymbol);
-
-                    // broadcast to others (including that client for consistency)
-                    broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + currentSymbol);
-                }
-
-                // check end
-                char w = checkWinner(board);
-                if (w != ' ')
-                {
-                    // tell everyone
-                    std::size_t winnerIndex = std::distance(symbols.begin(),
-                                          std::find(symbols.begin(), symbols.end(), w));
-                    if (winnerIndex < wins.size())
-                        wins[winnerIndex]++;
-
-                    board.print();
-                    std::cout << "Player " << w << " wins!\n";
-
-                    broadcast(gameClients, std::string("RESULT WIN ") + w);
-                    broadcast(gameClients, "RESET");
-
-                    // print server-side scoreboard
-                    std::cout << "Scoreboard:\n";
-                    for (std::size_t i = 0; i < symbols.size(); ++i)
-                    {
-                        std::cout << "  Player " << symbols[i] << ": " << wins[i] << "\n";
-                    }
-                    std::cout << "  Draws: " << draws << "\n";
-
-                    gameOver = true;
-                    break;
-                }
-
-                if (board.isFull())
-                {
-                    draws++;
-                    board.print();
-                    std::cout << "It's a draw.\n";
-
-                    broadcast(gameClients, "RESULT DRAW");
-                    broadcast(gameClients, "RESET");
-
-                    std::cout << "Scoreboard:\n";
-                    for (std::size_t i = 0; i < symbols.size(); ++i)
-                    {
-                        std::cout << "  Player " << symbols[i] << ": " << wins[i] << "\n";
-                    }
-                    std::cout << "  Draws: " << draws << "\n";
-
-                    gameOver = true;
-                    break;
-                }
-
-                // next player
+            if (!gameOver) {
                 currentPlayer = (currentPlayer + 1) % numPlayers;
             }
-
-            // after a game, go back to lobby mode
-            // re-enable accepting
-            stopAccept.store(false);
-            acceptThread = std::thread([&](){
-                while (!stopAccept.load())
-                {
-                    SOCKET cs = accept(listenSock, nullptr, nullptr);
-                    if (cs == INVALID_SOCKET) {
-                        continue;
-                    }
-                    {
-                        std::lock_guard<std::mutex> lock(clientsMutex);
-                        clients.push_back(cs);
-                        std::cout << "Client connected. Total: " << clients.size() << "\n";
-                    }
-                }
-            });
-
-            // and loop to lobby again
         }
+
+        // ----- back to lobby -----
+        stopAccept.store(false);
+        acceptThread = start_accepting();
+        // next loop iteration shows lobby again
     }
 
     // cleanup
