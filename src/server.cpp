@@ -1,9 +1,15 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <algorithm>
 #include "board.h"
 #include "net.h"
 
-// same winner check as before
+// ====== helpers from your earlier code ======
+
 char checkWinner(const Board& b)
 {
     std::size_t size = b.getSize();
@@ -57,6 +63,41 @@ char checkWinner(const Board& b)
     return ' ';
 }
 
+// generate a list of symbols: X, O, then ASCII that is not awful
+std::vector<char> generateSymbols(std::size_t count)
+{
+    std::vector<char> result;
+    if (count == 0) return result;
+
+    result.push_back('X');
+    if (count == 1) return result;
+    result.push_back('O');
+
+    std::vector<char> pool;
+    for (int c = 33; c <= 126; ++c)
+    {
+        char ch = static_cast<char>(c);
+        if (ch == '|' || ch == '+' || ch == '-' || ch == ' ') continue;
+        if (ch == 'X' || ch == 'O') continue;
+        pool.push_back(ch);
+    }
+
+    // just take from the pool in order
+    for (std::size_t i = 0; i + 2 < count && i < pool.size(); ++i)
+        result.push_back(pool[i]);
+
+    return result;
+}
+
+// broadcast helper
+void broadcast(const std::vector<SOCKET>& clients, const std::string& line)
+{
+    for (SOCKET s : clients)
+    {
+        send_line(s, line);
+    }
+}
+
 int main()
 {
     if (!net_init()) {
@@ -64,7 +105,6 @@ int main()
         return 1;
     }
 
-    // listen
     SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listenSock == INVALID_SOCKET) {
         std::cerr << "socket failed\n";
@@ -82,148 +122,238 @@ int main()
         return 1;
     }
 
-    if (listen(listenSock, 1) == SOCKET_ERROR) {
+    if (listen(listenSock, SOMAXCONN) == SOCKET_ERROR) {
         std::cerr << "listen failed\n";
         closesocket(listenSock);
         return 1;
     }
 
-    std::cout << "Server: waiting on port 5000...\n";
-    SOCKET clientSock = accept(listenSock, nullptr, nullptr);
-    if (clientSock == INVALID_SOCKET) {
-        std::cerr << "accept failed\n";
-        closesocket(listenSock);
-        return 1;
-    }
-    std::cout << "Client connected.\n";
-    closesocket(listenSock);
+    std::cout << "Server listening on port 5000.\n";
 
-    // scoreboard
-    int xWins = 0;
-    int oWins = 0;
-    int draws = 0;
+    // lobby state
+    std::vector<SOCKET> clients;
+    std::mutex clientsMutex;
+    std::atomic<bool> startGame{false};
+    std::atomic<bool> stopAccept{false};
 
-    // outer loop: play many games
+    // accept thread: keeps accepting until we say stop
+    std::thread acceptThread([&](){
+        while (!stopAccept.load())
+        {
+            SOCKET cs = accept(listenSock, nullptr, nullptr);
+            if (cs == INVALID_SOCKET) {
+                // could be interrupted, just continue
+                continue;
+            }
+            {
+                std::lock_guard<std::mutex> lock(clientsMutex);
+                clients.push_back(cs);
+                std::cout << "Client connected. Total: " << clients.size() << "\n";
+            }
+        }
+    });
+
+    // main loop: lobby → game → lobby ...
     while (true)
     {
-        Board board(3);
-        char mySymbol = 'X';
-        char theirSymbol = 'O';
-        bool myTurn = true;
+        // LOBBY PHASE
+        std::cout << "Lobby: type 'start' to begin with current players (" 
+                  << "[host] + " << clients.size() << " remote)." << std::endl;
+        std::cout << "You can just wait here while people connect." << std::endl;
 
-        // inner loop: one game
-        while (true)
+        std::string cmd;
+        std::getline(std::cin, cmd);
+        if (!std::cin) break;
+        if (cmd == "start")
         {
-            board.print();
+            // stop accepting new players
+            stopAccept.store(true);
+            // wait for the accept thread to finish
+            if (acceptThread.joinable())
+                acceptThread.join();
 
-            if (myTurn)
+            // snapshot client list
+            std::vector<SOCKET> gameClients;
             {
-                std::cout << "Your move (x y): ";
-                int x, y;
-                if (!(std::cin >> x >> y)) {
-                    std::cout << "Input ended.\n";
-                    goto end; // quit whole program
-                }
+                std::lock_guard<std::mutex> lock(clientsMutex);
+                gameClients = clients;
+            }
 
-                if (x < 0 || y < 0 || x >= (int)board.getSize() || y >= (int)board.getSize())
+            // number of players = server + remote clients
+            std::size_t numPlayers = 1 + gameClients.size();
+            std::vector<char> symbols = generateSymbols(numPlayers);
+            std::size_t boardSize = numPlayers + 1;
+
+            // tell every client their START info
+            for (std::size_t i = 0; i < gameClients.size(); ++i)
+            {
+                char mySym = symbols[i + 1]; // 0 = server
+                send_line(gameClients[i], "START " + std::to_string(boardSize) + " " + std::string(1, mySym));
+            }
+
+            // now run the game
+            Board board(boardSize);
+            bool gameOver = false;
+            std::size_t currentPlayer = 0; // 0 = server
+
+            // simple scoreboard just for this session
+            std::vector<int> wins(numPlayers, 0);
+            int draws = 0;
+
+            while (!gameOver)
+            {
+                board.print();
+                char currentSymbol = symbols[currentPlayer];
+
+                if (currentPlayer == 0)
                 {
-                    std::cout << "Invalid move, try again.\n";
-                    continue;
+                    // server's turn (read from console)
+                    std::cout << "Your move (x y): ";
+                    int x, y;
+                    if (!(std::cin >> x >> y)) {
+                        std::cout << "Input ended.\n";
+                        gameOver = true;
+                        break;
+                    }
+                    // eat leftover newline for next getline later
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+                    if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize)
+                    {
+                        std::cout << "Invalid move, try again.\n";
+                        continue;
+                    }
+                    if (board.get(x, y) != ' ')
+                    {
+                        std::cout << "That cell is taken.\n";
+                        continue;
+                    }
+
+                    board.set(x, y, currentSymbol);
+
+                    // broadcast to all clients: MOVE x y S
+                    broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + currentSymbol);
                 }
-                if (board.get(x, y) != ' ')
+                else
                 {
-                    std::cout << "That cell is taken.\n";
-                    continue;
+                    // remote player's turn
+                    SOCKET theirSock = gameClients[currentPlayer - 1];
+
+                    // tell only that client it's their turn
+                    send_line(theirSock, "YOUR_TURN");
+
+                    // receive their move
+                    std::string line;
+                    if (!recv_line(theirSock, line)) {
+                        std::cout << "Player " << currentPlayer << " disconnected.\n";
+                        gameOver = true;
+                        break;
+                    }
+
+                    int x, y;
+                    if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) != 2)
+                    {
+                        std::cout << "Bad move from client.\n";
+                        gameOver = true;
+                        break;
+                    }
+
+                    // apply
+                    if (x < 0 || y < 0 || x >= (int)boardSize || y >= (int)boardSize || board.get(x, y) != ' ')
+                    {
+                        std::cout << "Client sent invalid move.\n";
+                        gameOver = true;
+                        break;
+                    }
+                    board.set(x, y, currentSymbol);
+
+                    // broadcast to others (including that client for consistency)
+                    broadcast(gameClients, "MOVE " + std::to_string(x) + " " + std::to_string(y) + " " + currentSymbol);
                 }
 
-                board.set(x, y, mySymbol);
-
-                // tell client
-                send_line(clientSock, "MOVE " + std::to_string(x) + " " + std::to_string(y));
-
+                // check end
                 char w = checkWinner(board);
                 if (w != ' ')
                 {
+                    // tell everyone
+                    std::size_t winnerIndex = std::distance(symbols.begin(),
+                                          std::find(symbols.begin(), symbols.end(), w));
+                    if (winnerIndex < wins.size())
+                        wins[winnerIndex]++;
+
                     board.print();
                     std::cout << "Player " << w << " wins!\n";
 
-                    // update score (server is X)
-                    if (w == 'X') xWins++;
-                    else if (w == 'O') oWins++;
+                    broadcast(gameClients, std::string("RESULT WIN ") + w);
+                    broadcast(gameClients, "RESET");
 
-                    // tell client
-                    send_line(clientSock, std::string("RESULT WIN ") + w);
-                    send_line(clientSock, "RESET");
+                    // print server-side scoreboard
+                    std::cout << "Scoreboard:\n";
+                    for (std::size_t i = 0; i < symbols.size(); ++i)
+                    {
+                        std::cout << "  Player " << symbols[i] << ": " << wins[i] << "\n";
+                    }
+                    std::cout << "  Draws: " << draws << "\n";
 
-                    std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
-                    break; // break inner, start new game
-                }
-                if (board.isFull())
-                {
-                    board.print();
-                    std::cout << "It's a draw.\n";
-                    draws++;
-
-                    send_line(clientSock, "RESULT DRAW");
-                    send_line(clientSock, "RESET");
-
-                    std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
+                    gameOver = true;
                     break;
                 }
 
-                myTurn = false;
-            }
-            else
-            {
-                std::cout << "Waiting for opponent...\n";
-                std::string line;
-                if (!recv_line(clientSock, line)) {
-                    std::cout << "Client disconnected.\n";
-                    goto end;
-                }
-
-                int x, y;
-                if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) == 2)
+                if (board.isFull())
                 {
-                    board.set(x, y, theirSymbol);
+                    draws++;
+                    board.print();
+                    std::cout << "It's a draw.\n";
 
-                    char w = checkWinner(board);
-                    if (w != ' ')
+                    broadcast(gameClients, "RESULT DRAW");
+                    broadcast(gameClients, "RESET");
+
+                    std::cout << "Scoreboard:\n";
+                    for (std::size_t i = 0; i < symbols.size(); ++i)
                     {
-                        board.print();
-                        std::cout << "Player " << w << " wins!\n";
-
-                        if (w == 'X') xWins++;
-                        else if (w == 'O') oWins++;
-
-                        send_line(clientSock, std::string("RESULT WIN ") + w);
-                        send_line(clientSock, "RESET");
-
-                        std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
-                        break;
+                        std::cout << "  Player " << symbols[i] << ": " << wins[i] << "\n";
                     }
-                    if (board.isFull())
-                    {
-                        board.print();
-                        std::cout << "It's a draw.\n";
-                        draws++;
+                    std::cout << "  Draws: " << draws << "\n";
 
-                        send_line(clientSock, "RESULT DRAW");
-                        send_line(clientSock, "RESET");
-
-                        std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
-                        break;
-                    }
-
-                    myTurn = true;
+                    gameOver = true;
+                    break;
                 }
+
+                // next player
+                currentPlayer = (currentPlayer + 1) % numPlayers;
             }
+
+            // after a game, go back to lobby mode
+            // re-enable accepting
+            stopAccept.store(false);
+            acceptThread = std::thread([&](){
+                while (!stopAccept.load())
+                {
+                    SOCKET cs = accept(listenSock, nullptr, nullptr);
+                    if (cs == INVALID_SOCKET) {
+                        continue;
+                    }
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex);
+                        clients.push_back(cs);
+                        std::cout << "Client connected. Total: " << clients.size() << "\n";
+                    }
+                }
+            });
+
+            // and loop to lobby again
         }
-        // then loop again: new Board(3) and go
     }
 
-end:
-    closesocket(clientSock);
+    // cleanup
+    stopAccept.store(true);
+    if (acceptThread.joinable())
+        acceptThread.join();
+    {
+        std::lock_guard<std::mutex> lock(clientsMutex);
+        for (SOCKET s : clients) closesocket(s);
+    }
+    closesocket(listenSock);
     net_cleanup();
     return 0;
 }

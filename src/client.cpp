@@ -3,59 +3,6 @@
 #include "board.h"
 #include "net.h"
 
-char checkWinner(const Board& b)
-{
-    std::size_t size = b.getSize();
-
-    // rows
-    for (std::size_t y = 0; y < size; ++y)
-    {
-        char first = b.get(0, y);
-        if (first == ' ') continue;
-        bool allSame = true;
-        for (std::size_t x = 1; x < size; ++x)
-            if (b.get(x, y) != first) { allSame = false; break; }
-        if (allSame) return first;
-    }
-
-    // columns
-    for (std::size_t x = 0; x < size; ++x)
-    {
-        char first = b.get(x, 0);
-        if (first == ' ') continue;
-        bool allSame = true;
-        for (std::size_t y = 1; y < size; ++y)
-            if (b.get(x, y) != first) { allSame = false; break; }
-        if (allSame) return first;
-    }
-
-    // main diag
-    {
-        char first = b.get(0, 0);
-        if (first != ' ')
-        {
-            bool allSame = true;
-            for (std::size_t i = 1; i < size; ++i)
-                if (b.get(i, i) != first) { allSame = false; break; }
-            if (allSame) return first;
-        }
-    }
-
-    // anti diag
-    {
-        char first = b.get(size - 1, 0);
-        if (first != ' ')
-        {
-            bool allSame = true;
-            for (std::size_t i = 1; i < size; ++i)
-                if (b.get(size - 1 - i, i) != first) { allSame = false; break; }
-            if (allSame) return first;
-        }
-    }
-
-    return ' ';
-}
-
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -85,109 +32,110 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::cout << "Connected to server.\n";
+    std::cout << "Connected. Waiting for START...\n";
 
-    // scoreboard (client is O)
     int myWins = 0;
-    int oppWins = 0;
     int draws = 0;
+    int losses = 0;
 
-    // outer loop: many games
     while (true)
     {
-        Board board(3);
-        char mySymbol = 'O';
-        char theirSymbol = 'X';
-        bool myTurn = false; // client goes second
+        // wait for START
+        std::string line;
+        if (!recv_line(sock, line)) {
+            std::cout << "Server disconnected.\n";
+            break;
+        }
 
-        // inner loop: one game
-        while (true)
+        if (line.rfind("START", 0) != 0) {
+            std::cout << "Unexpected message: " << line << "\n";
+            continue;
+        }
+
+        int boardSize = 3;
+        char mySymbol = 'O';
+        {
+            int tmpSize = 0;
+            char tmpSym = 'O';
+            if (sscanf_s(line.c_str(), "START %d %c", &tmpSize, &tmpSym, 1) == 2) {
+                boardSize = tmpSize;
+                mySymbol = tmpSym;
+            }
+        }
+
+        Board board(boardSize);
+        std::cout << "Game starting. You are '" << mySymbol << "'. Board " << boardSize << "x" << boardSize << "\n";
+
+        bool inGame = true;
+        while (inGame)
         {
             board.print();
+            std::string msg;
+            if (!recv_line(sock, msg)) {
+                std::cout << "Server disconnected.\n";
+                goto end;
+            }
 
-            if (myTurn)
+            if (msg == "YOUR_TURN")
             {
+                // ask user
+                board.print();
                 std::cout << "Your move (x y): ";
                 int x, y;
                 if (!(std::cin >> x >> y)) {
                     std::cout << "Input ended.\n";
                     goto end;
                 }
+                // eat trailing newline
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-                if (x < 0 || y < 0 || x >= (int)board.getSize() || y >= (int)board.getSize())
-                {
-                    std::cout << "Invalid move, try again.\n";
-                    continue;
-                }
-                if (board.get(x, y) != ' ')
-                {
-                    std::cout << "That cell is taken.\n";
-                    continue;
-                }
-
-                board.set(x, y, mySymbol);
                 send_line(sock, "MOVE " + std::to_string(x) + " " + std::to_string(y));
+            }
+            else if (msg.rfind("MOVE", 0) == 0)
+            {
+                int x, y;
+                char sym;
+                // may be: MOVE x y S
+                if (sscanf_s(msg.c_str(), "MOVE %d %d %c", &x, &y, &sym, 1) == 3) {
+                    board.set(x, y, sym);
+                } else if (sscanf_s(msg.c_str(), "MOVE %d %d", &x, &y) == 2) {
+                    // fallback: if server didn’t send symbol, use ?
+                    // but our server will send symbol
+                }
+            }
+            else if (msg.rfind("RESULT", 0) == 0)
+            {
+                if (msg == "RESULT DRAW") {
+                    board.print();
+                    std::cout << "It's a draw.\n";
+                    draws++;
+                } else {
+                    char w;
+                    if (sscanf_s(msg.c_str(), "RESULT WIN %c", &w, 1) == 1) {
+                        board.print();
+                        std::cout << "Player " << w << " wins!\n";
+                        if (w == mySymbol) myWins++;
+                        else losses++;
+                    }
+                }
 
-                // We don't decide winner here; we wait for server's RESULT
-                myTurn = false;
+                // show my scoreboard
+                std::cout << "My score: Wins=" << myWins
+                          << " Losses=" << losses
+                          << " Draws=" << draws << "\n";
+            }
+            else if (msg == "RESET")
+            {
+                // back to waiting for START
+                inGame = false;
             }
             else
             {
-                std::string line;
-                if (!recv_line(sock, line)) {
-                    std::cout << "Server disconnected.\n";
-                    goto end;
-                }
-
-                // Could be MOVE ... or RESULT ...
-                if (line.rfind("MOVE", 0) == 0)
-                {
-                    int x, y;
-                    if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) == 2)
-                    {
-                        board.set(x, y, theirSymbol);
-                        myTurn = true;
-                    }
-                }
-                else if (line.rfind("RESULT", 0) == 0)
-                {
-                    // server will send RESULT WIN X / RESULT WIN O / RESULT DRAW
-                    if (line == "RESULT DRAW")
-                    {
-                        draws++;
-                        board.print();
-                        std::cout << "It's a draw.\n";
-                    }
-                    else
-                    {
-                        // parse winner
-                        char winner = ' ';
-                        if (sscanf_s(line.c_str(), "RESULT WIN %c", &winner, 1) == 1)
-                        {
-                            board.print();
-                            std::cout << "Player " << winner << " wins!\n";
-                            if (winner == mySymbol) myWins++;
-                            else oppWins++;
-                        }
-                    }
-
-                    // print scoreboard
-                    std::cout << "Score: Me=" << myWins
-                              << " Opp=" << oppWins
-                              << " Draws=" << draws << "\n";
-
-                    // after RESULT we expect RESET
-                    std::string resetLine;
-                    if (!recv_line(sock, resetLine)) {
-                        std::cout << "Server disconnected.\n";
-                        goto end;
-                    }
-                    // resetLine should be "RESET"
-                    break; // break inner, start new game
-                }
+                // ignore unknown
             }
         }
-        // and outer while goes again
+
+        // loop: wait for next START
     }
 
 end:
