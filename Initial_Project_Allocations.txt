@@ -1,0 +1,9 @@
+Louis:
+	Base test environment
+Christian:
+	Base game logic
+Matt:
+	Base build system
+	Base CI github actions
+Ailis:
+	Github readme according the coursework spec
