@@ -2,7 +2,7 @@
 Multiplayer tic tac toe game with build tools and CI implementations
 
 Format
-
+```text
   X | O | 3
  ---+---+---
   4 | X | 6
