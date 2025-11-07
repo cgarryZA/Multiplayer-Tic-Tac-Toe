@@ -30,11 +30,15 @@ void initBoard(Board &b, std::size_t newSize)
 
 std::vector<char> generateRandomSymbols(int count)
 {
+    std::vector<char> result;
+    if (count >= 1) result.push_back('X');
+    if (count >= 2) result.push_back('O');
+
     std::vector<char> pool;
     for (int c = 33; c <= 126; ++c)
     {
         char ch = static_cast<char>(c);
-        if (ch == '|' || ch == '+' || ch == ' ')
+        if (ch == '|' || ch == '+' || ch == ' ' || ch == '-')
         {
             continue;
         }
@@ -45,12 +49,16 @@ std::vector<char> generateRandomSymbols(int count)
     std::mt19937 gen(rd());
     std::shuffle(pool.begin(), pool.end(), gen);
 
-    if (count > (int)pool.size())
+    for (char ch : pool)
     {
-        count = (int)pool.size();
+        if ((int)result.size() >= count)
+        {
+        break;
+        }
+        result.push_back(ch);
     }
 
-    return std::vector<char>(pool.begin(), pool.begin() + count);
+    return result;
 }
 
 
