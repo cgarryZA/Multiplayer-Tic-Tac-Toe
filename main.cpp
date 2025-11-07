@@ -2,23 +2,30 @@
 #include <array>
 #include <vector>
 
+constexpr std::array<char, 5> SYMBOLS{'X', 'Y', 'Z', 'A', 'B'};
+
 struct Board
 {
-    std::size_t size = 3;
+    std::size_t                    size = 3;
     std::vector<std::vector<char>> cells;
 };
 
 struct GameState
 {
+    Board             board;
     std::vector<char> players;
-    std::size_t currentPlayer = 0;
-
-    Board board;
+    std::size_t       currentPlayer = 0;
+    
 };
 
 std::size_t boardSize(std::size_t numPlayers)
 {
     return numPlayers + 1;
+}
+
+char nextSymbol(int playerIndex)
+{
+    return SYMBOLS[playerIndex];
 }
 
 void initBoard(Board &b, std::size_t newSize) 
@@ -27,11 +34,20 @@ void initBoard(Board &b, std::size_t newSize)
     b.cells.assign(b.size, std::vector<char>(b.size, ' '));
 }
 
-void initgame(GameState &gs)
+void initgame(int playerCount, GameState &gs)
 {
     gs.players.clear();
-    gs.players.push_back('X');
-    gs.players.push_back('O');
+
+    if (playerCount > (int)SYMBOLS.size())
+    {
+        playerCount = (int)SYMBOLS.size();
+    }
+
+    for (int i = 0; i < playerCount; ++i)
+    {
+        gs.players.push_back(nextSymbol(i));
+    }
+    
     gs.currentPlayer = 0;
 
     std::size_t size = boardSize(gs.players.size());
@@ -41,21 +57,46 @@ void initgame(GameState &gs)
 
 void printBoard(const Board &b) 
 {
-    for (int y = b.size - 1; y >= 0; --y) 
+    for (int y = (int)b.size - 1; y >= 0; --y) 
     {
         std::cout << " " << y << "   ";
-        std::cout << b.cells[y][0] << " | " << b.cells[y][1] << " | " << b.cells[y][2] << "\n";
+        for (std::size_t x = 0; x < b.size; ++x)
+        {
+            std::cout << b.cells[y][x];
+            if (x < b.size - 1)
+            {
+                std::cout << " | ";
+            }
+        }
+        std::cout << "\n";
+
         if (y > 0) 
         {
-            std::cout << "    ---+---+---\n";
+            std::cout << "    ";
+            for (std::size_t x = 0; x < b.size; ++x)
+            {
+                std::cout << "---";
+                if (x < b.size - 1)
+                {
+                    std::cout << "+";
+                }
+            }
+            std::cout << "\n";
         }
     }
-    std::cout << "      0   1   2\n";
+
+    std::cout << "      ";
+    for (std::size_t x = 0; x < b.size; ++x)
+    {
+        std::cout << x << "   ";
+    }
+    std::cout << "\n";
 }
 
 bool placeMove(Board &b, int x, int y, char player) 
 {
-    if (x < 0 || x > b.size - 1 || y < 0 || y > b.size - 1) return false;
+    if (x < 0 || y < 0) return false;
+    if (x >= (int)b.size || y >= (int)b.size) return false;
     if (b.cells[y][x] != ' ') return false;
     b.cells[y][x] = player;
     return true;
@@ -139,25 +180,54 @@ char checkWinner(const Board &b)
     return ' ';
 }
 
-bool checkStalemate(const Board &b) 
+bool checkStaleMate(const Board &b)
 {
-    for (int y = 0; y < b.size; ++y)
-    {
-        for (int x = 0; x < b.size; ++x)
-        {
+    for (std::size_t y = 0; y < b.size; ++y)
+        for (std::size_t x = 0; x < b.size; ++x)
             if (b.cells[y][x] == ' ')
-            {
                 return false;
-            }
-        }
-    }
     return true;
+}
+
+std::string checkGameState(const Board &b)
+{
+    char winner = checkWinner(b);
+    if (winner != ' ') 
+    {
+        printBoard(b);
+        return std::string("Player ") + std::string(1, winner) + " wins!\n";
+    }
+    else if (winner == '+')
+    {
+        printBoard(b);
+        return "It's a draw.\n";
+    }
+
+    return " ";
 }
 
 int main() {
     GameState game;
 
-    initgame(game);
+    int playerCount;
+
+    std::cout << "Enter number of players: ";
+    if (!(std::cin >> playerCount)) 
+        {
+            std::cout << "Input ended.\n";
+            return 0;
+        }
+    
+    if (playerCount < 2)
+    {
+        playerCount = 2;
+    }
+    if (playerCount > (int)SYMBOLS.size())
+    {
+        playerCount = (int)SYMBOLS.size();
+    }
+
+    initgame(playerCount, game);
 
     while (true) 
     {
@@ -181,20 +251,19 @@ int main() {
         }
 
         char winner = checkWinner(game.board);
-        if (winner != ' ') 
+        if (winner != ' ')
         {
             printBoard(game.board);
             std::cout << "Player " << winner << " wins!\n";
             break;
         }
-        
-        if (checkStalemate(game.board))
+        if (checkStaleMate(game.board))
         {
             printBoard(game.board);
             std::cout << "It's a draw.\n";
             break;
         }
-
+        
         game.currentPlayer = (game.currentPlayer + 1) % game.players.size();
     }
 
