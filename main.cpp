@@ -1,27 +1,50 @@
 #include <iostream>
 #include <array>
+#include <vector>
 
-const std::size_t BoardSize = 3;
-
-using Board = std::array<std::array<char, BoardSize>, BoardSize>;
-
-void initBoard(Board &b) 
+struct Board
 {
-    for (int y = 0; y < BoardSize; ++y)
-    {
-        for (int x = 0; x < BoardSize; ++x)
-        {
-            b[y][x] = ' ';
-        }
-    }
+    std::size_t size = 3;
+    std::vector<std::vector<char>> cells;
+};
+
+struct GameState
+{
+    std::vector<char> players;
+    std::size_t currentPlayer = 0;
+
+    Board board;
+};
+
+std::size_t boardSize(std::size_t numPlayers)
+{
+    return numPlayers + 1;
+}
+
+void initBoard(Board &b, std::size_t newSize) 
+{
+    b.size = newSize;
+    b.cells.assign(b.size, std::vector<char>(b.size, ' '));
+}
+
+void initgame(GameState &gs)
+{
+    gs.players.clear();
+    gs.players.push_back('X');
+    gs.players.push_back('O');
+    gs.currentPlayer = 0;
+
+    std::size_t size = boardSize(gs.players.size());
+
+    initBoard(gs.board, size);
 }
 
 void printBoard(const Board &b) 
 {
-    for (int y = BoardSize - 1; y >= 0; --y) 
+    for (int y = b.size - 1; y >= 0; --y) 
     {
         std::cout << " " << y << "   ";
-        std::cout << b[y][0] << " | " << b[y][1] << " | " << b[y][2] << "\n";
+        std::cout << b.cells[y][0] << " | " << b.cells[y][1] << " | " << b.cells[y][2] << "\n";
         if (y > 0) 
         {
             std::cout << "    ---+---+---\n";
@@ -32,25 +55,25 @@ void printBoard(const Board &b)
 
 bool placeMove(Board &b, int x, int y, char player) 
 {
-    if (x < 0 || x > BoardSize - 1 || y < 0 || y > BoardSize - 1) return false;
-    if (b[y][x] != ' ') return false;
-    b[y][x] = player;
+    if (x < 0 || x > b.size - 1 || y < 0 || y > b.size - 1) return false;
+    if (b.cells[y][x] != ' ') return false;
+    b.cells[y][x] = player;
     return true;
 }
 
 char checkWinner(const Board &b)
 {
     //Check rows
-    for (int y = 0; y < (int)BoardSize; ++y)
+    for (int y = 0; y < b.size; ++y)
     {
-        char first = b[y][0];
+        char first = b.cells[y][0];
         if (first == ' ') continue;
 
         bool allSame = true;
 
-        for (int x = 1; x < (int)BoardSize; ++x)
+        for (int x = 1; x < b.size; ++x)
         {
-            if (b[y][x] != first)
+            if (b.cells[y][x] != first)
             {
                 allSame = false;
                 break;
@@ -60,16 +83,16 @@ char checkWinner(const Board &b)
     }
 
     //Check columns
-    for (int x = 0; x < (int)BoardSize; ++x)
+    for (int x = 0; x < b.size; ++x)
     {
-        char first = b[0][x];
+        char first = b.cells[0][x];
         if (first == ' ') continue;
 
         bool allSame = true;
 
-        for (int y = 1; y < (int)BoardSize; ++y)
+        for (int y = 1; y < b.size; ++y)
         {
-            if (b[y][x] != first)
+            if (b.cells[y][x] != first)
             {
                 allSame = false;
                 break;
@@ -80,13 +103,13 @@ char checkWinner(const Board &b)
 
     //Check main diagonal
     {
-        char first = b[0][0];
+        char first = b.cells[0][0];
         if (first != ' ')
         {
             bool allSame = true;
-            for (int i = 1; i < (int)BoardSize; ++i)
+            for (int i = 1; i < b.size; ++i)
             {
-                if (b[i][i] != first)
+                if (b.cells[i][i] != first)
                 {
                     allSame = false;
                     break;
@@ -98,13 +121,13 @@ char checkWinner(const Board &b)
 
     //Check anti-diagonal
     {
-        char first = b[0][BoardSize - 1];
+        char first = b.cells[0][b.size - 1];
         if (first != ' ')
         {
             bool allSame = true;
-            for (int i = 1; i < (int)BoardSize; ++i)
+            for (int i = 1; i < b.size; ++i)
             {
-                if (b[i][BoardSize - 1 - i] != first)
+                if (b.cells[i][b.size - 1 - i] != first)
                 {
                     allSame = false;
                     break;
@@ -118,11 +141,11 @@ char checkWinner(const Board &b)
 
 bool checkStalemate(const Board &b) 
 {
-    for (int y = 0; y < (int)BoardSize; ++y)
+    for (int y = 0; y < b.size; ++y)
     {
-        for (int x = 0; x < (int)BoardSize; ++x)
+        for (int x = 0; x < b.size; ++x)
         {
-            if (b[y][x] == ' ')
+            if (b.cells[y][x] == ' ')
             {
                 return false;
             }
@@ -132,16 +155,16 @@ bool checkStalemate(const Board &b)
 }
 
 int main() {
-    Board board;
-    initBoard(board);
+    GameState game;
 
-    char current = 'X';
+    initgame(game);
 
     while (true) 
     {
-        printBoard(board);
+        printBoard(game.board);
 
-        std::cout << "Player " << current << " move (x y):";
+        char currentPlayer = game.players[game.currentPlayer];
+        std::cout << "Player " << currentPlayer << " move (x y): ";
 
         int x, y;
 
@@ -151,28 +174,28 @@ int main() {
             break;
         }
 
-        if (!placeMove(board, x, y, current)) 
+        if (!placeMove(game.board, x, y, currentPlayer)) 
         {
             std::cout << "Invalid move, try again.\n";
             continue;
         }
 
-        char winner = checkWinner(board);
+        char winner = checkWinner(game.board);
         if (winner != ' ') 
         {
-            printBoard(board);
+            printBoard(game.board);
             std::cout << "Player " << winner << " wins!\n";
             break;
         }
         
-        if (checkStalemate(board))
+        if (checkStalemate(game.board))
         {
-            printBoard(board);
+            printBoard(game.board);
             std::cout << "It's a draw.\n";
             break;
         }
 
-        current = (current == 'X') ? 'O' : 'X';
+        game.currentPlayer = (game.currentPlayer + 1) % game.players.size();
     }
 
     return 0;
