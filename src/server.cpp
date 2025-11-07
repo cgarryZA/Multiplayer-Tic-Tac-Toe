@@ -3,7 +3,7 @@
 #include "board.h"
 #include "net.h"
 
-// copy the winner/draw logic so we don't touch game.cpp
+// same winner check as before
 char checkWinner(const Board& b)
 {
     std::size_t size = b.getSize();
@@ -19,7 +19,7 @@ char checkWinner(const Board& b)
         if (allSame) return first;
     }
 
-    // cols
+    // columns
     for (std::size_t x = 0; x < size; ++x)
     {
         char first = b.get(x, 0);
@@ -64,6 +64,7 @@ int main()
         return 1;
     }
 
+    // listen
     SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listenSock == INVALID_SOCKET) {
         std::cerr << "socket failed\n";
@@ -97,91 +98,131 @@ int main()
     std::cout << "Client connected.\n";
     closesocket(listenSock);
 
-    // game state
-    Board board(3);
-    char mySymbol = 'X';
-    char theirSymbol = 'O';
-    bool myTurn = true;
+    // scoreboard
+    int xWins = 0;
+    int oWins = 0;
+    int draws = 0;
 
+    // outer loop: play many games
     while (true)
     {
-        board.print();
+        Board board(3);
+        char mySymbol = 'X';
+        char theirSymbol = 'O';
+        bool myTurn = true;
 
-        if (myTurn)
+        // inner loop: one game
+        while (true)
         {
-            std::cout << "Your move (x y): ";
-            int x, y;
-            if (!(std::cin >> x >> y)) {
-                std::cout << "Input ended.\n";
-                break;
-            }
+            board.print();
 
-            if (x < 0 || y < 0 || x >= (int)board.getSize() || y >= (int)board.getSize())
+            if (myTurn)
             {
-                std::cout << "Invalid move, try again.\n";
-                continue;
-            }
-            if (board.get(x, y) != ' ')
-            {
-                std::cout << "That cell is taken.\n";
-                continue;
-            }
+                std::cout << "Your move (x y): ";
+                int x, y;
+                if (!(std::cin >> x >> y)) {
+                    std::cout << "Input ended.\n";
+                    goto end; // quit whole program
+                }
 
-            board.set(x, y, mySymbol);
+                if (x < 0 || y < 0 || x >= (int)board.getSize() || y >= (int)board.getSize())
+                {
+                    std::cout << "Invalid move, try again.\n";
+                    continue;
+                }
+                if (board.get(x, y) != ' ')
+                {
+                    std::cout << "That cell is taken.\n";
+                    continue;
+                }
 
-            // tell client
-            send_line(clientSock, "MOVE " + std::to_string(x) + " " + std::to_string(y));
+                board.set(x, y, mySymbol);
 
-            // check end
-            char w = checkWinner(board);
-            if (w != ' ')
-            {
-                board.print();
-                std::cout << "Player " << w << " wins!\n";
-                break;
-            }
-            if (board.isFull())
-            {
-                board.print();
-                std::cout << "It's a draw.\n";
-                break;
-            }
-
-            myTurn = false;
-        }
-        else
-        {
-            std::cout << "Waiting for opponent...\n";
-            std::string line;
-            if (!recv_line(clientSock, line)) {
-                std::cout << "Client disconnected.\n";
-                break;
-            }
-
-            int x, y;
-            if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) == 2)
-            {
-                board.set(x, y, theirSymbol);
+                // tell client
+                send_line(clientSock, "MOVE " + std::to_string(x) + " " + std::to_string(y));
 
                 char w = checkWinner(board);
                 if (w != ' ')
                 {
                     board.print();
                     std::cout << "Player " << w << " wins!\n";
-                    break;
+
+                    // update score (server is X)
+                    if (w == 'X') xWins++;
+                    else if (w == 'O') oWins++;
+
+                    // tell client
+                    send_line(clientSock, std::string("RESULT WIN ") + w);
+                    send_line(clientSock, "RESET");
+
+                    std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
+                    break; // break inner, start new game
                 }
                 if (board.isFull())
                 {
                     board.print();
                     std::cout << "It's a draw.\n";
+                    draws++;
+
+                    send_line(clientSock, "RESULT DRAW");
+                    send_line(clientSock, "RESET");
+
+                    std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
                     break;
                 }
 
-                myTurn = true;
+                myTurn = false;
+            }
+            else
+            {
+                std::cout << "Waiting for opponent...\n";
+                std::string line;
+                if (!recv_line(clientSock, line)) {
+                    std::cout << "Client disconnected.\n";
+                    goto end;
+                }
+
+                int x, y;
+                if (sscanf_s(line.c_str(), "MOVE %d %d", &x, &y) == 2)
+                {
+                    board.set(x, y, theirSymbol);
+
+                    char w = checkWinner(board);
+                    if (w != ' ')
+                    {
+                        board.print();
+                        std::cout << "Player " << w << " wins!\n";
+
+                        if (w == 'X') xWins++;
+                        else if (w == 'O') oWins++;
+
+                        send_line(clientSock, std::string("RESULT WIN ") + w);
+                        send_line(clientSock, "RESET");
+
+                        std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
+                        break;
+                    }
+                    if (board.isFull())
+                    {
+                        board.print();
+                        std::cout << "It's a draw.\n";
+                        draws++;
+
+                        send_line(clientSock, "RESULT DRAW");
+                        send_line(clientSock, "RESET");
+
+                        std::cout << "Score: X=" << xWins << " O=" << oWins << " Draws=" << draws << "\n";
+                        break;
+                    }
+
+                    myTurn = true;
+                }
             }
         }
+        // then loop again: new Board(3) and go
     }
 
+end:
     closesocket(clientSock);
     net_cleanup();
     return 0;
