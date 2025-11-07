@@ -38,6 +38,99 @@ bool placeMove(Board &b, int x, int y, char player)
     return true;
 }
 
+char checkWinner(const Board &b)
+{
+    //Check rows
+    for (int y = 0; y < (int)BoardSize; ++y)
+    {
+        char first = b[y][0];
+        if (first == ' ') continue;
+
+        bool allSame = true;
+
+        for (int x = 1; x < (int)BoardSize; ++x)
+        {
+            if (b[y][x] != first)
+            {
+                allSame = false;
+                break;
+            }
+        }
+        if (allSame) return first;
+    }
+
+    //Check columns
+    for (int x = 0; x < (int)BoardSize; ++x)
+    {
+        char first = b[0][x];
+        if (first == ' ') continue;
+
+        bool allSame = true;
+
+        for (int y = 1; y < (int)BoardSize; ++y)
+        {
+            if (b[y][x] != first)
+            {
+                allSame = false;
+                break;
+            }
+        }
+        if (allSame) return first;
+    }
+
+    //Check main diagonal
+    {
+        char first = b[0][0];
+        if (first != ' ')
+        {
+            bool allSame = true;
+            for (int i = 1; i < (int)BoardSize; ++i)
+            {
+                if (b[i][i] != first)
+                {
+                    allSame = false;
+                    break;
+                }
+            }
+            if (allSame) return first;
+        }
+    }
+
+    //Check anti-diagonal
+    {
+        char first = b[0][BoardSize - 1];
+        if (first != ' ')
+        {
+            bool allSame = true;
+            for (int i = 1; i < (int)BoardSize; ++i)
+            {
+                if (b[i][BoardSize - 1 - i] != first)
+                {
+                    allSame = false;
+                    break;
+                }
+            }
+            if (allSame) return first;
+        }
+    }
+    return ' ';
+}
+
+bool checkStalemate(const Board &b) 
+{
+    for (int y = 0; y < (int)BoardSize; ++y)
+    {
+        for (int x = 0; x < (int)BoardSize; ++x)
+        {
+            if (b[y][x] == ' ')
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 int main() {
     Board board;
     initBoard(board);
@@ -62,6 +155,21 @@ int main() {
         {
             std::cout << "Invalid move, try again.\n";
             continue;
+        }
+
+        char winner = checkWinner(board);
+        if (winner != ' ') 
+        {
+            printBoard(board);
+            std::cout << "Player " << winner << " wins!\n";
+            break;
+        }
+        
+        if (checkStalemate(board))
+        {
+            printBoard(board);
+            std::cout << "It's a draw.\n";
+            break;
         }
 
         current = (current == 'X') ? 'O' : 'X';
