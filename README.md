@@ -13,6 +13,7 @@ Each player is represented by their own symbol (e.g. 'X', 'O' etc)
 Each player takes a turn placing a symbol on the board until the board is full or the game is won (rules are described below)
 
 ## Game Format ##
+<img width="276" height="281" alt="image" src="https://github.com/user-attachments/assets/d178e02b-0858-479c-b2e5-9f47f88caa17" />
 
  2   X | O | 
     ---+---+---
@@ -49,6 +50,9 @@ This class manages the board and the players. It handles the moves and checks fo
 - Use CMake to compile the project files
 - Run the executable from the terminal with ./mttt
 - Successful installation will be prompted with the command 'Enter number of players:'
+
+## Testing ##
+This project uses the GoogleTest (gtest) framework with test files located in the tests/ directory
 
 ## LICENSE ##
 This project is released under the MIT License. See the LICENSE file for details.
