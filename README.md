@@ -45,7 +45,10 @@ This class manages the board and the players. It handles the moves and checks fo
 - SOMETHING FOR TESTING - NEED TO ASK LOUIS
 
 ## Installing ##
-
+- Clone the project and create a build directory inside the project folder
+- Use CMake to compile the project files
+- Run the executable from the terminal with ./mttt
+- Successful installation will be prompted with the command 'Enter number of players:'
 
 
 
