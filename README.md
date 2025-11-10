@@ -32,10 +32,10 @@ move looks like (x, y)
 
 
 ## Classes ##
-## board:
+board:
 This class stores the board as a 2D grid, providing the size of the board, the get() and set() methods, and the isFull() method for checking.
 
-## game:
+game:
 This class manages the board and the players. It handles the moves and checks for winning players or if the board is full.
 
 ## Dependencies ##
@@ -50,6 +50,7 @@ This class manages the board and the players. It handles the moves and checks fo
 - Run the executable from the terminal with ./mttt
 - Successful installation will be prompted with the command 'Enter number of players:'
 
-
+## LICENSE ##
+This project is released under the MIT License. See the LICENSE file for details.
 
 
