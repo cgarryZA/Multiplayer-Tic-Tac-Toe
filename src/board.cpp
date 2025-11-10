@@ -1,9 +1,9 @@
 // board.cpp
 #include "board.h"
 
-Board::Board(std::size_t size)
-    : size_(size), cells_(size, std::vector<char>(size, ' '))
-{}
+Board::Board(std::size_t size) : size_(size), cells_(size, std::vector<char>(size, ' '))
+{
+}
 
 void Board::resize(std::size_t newSize)
 {

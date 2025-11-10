@@ -15,7 +15,7 @@ public:
     void set(std::size_t x, std::size_t y, char value);
 
     void print() const;
-    bool isFull() const;   // rename from checkStaleMate
+    bool isFull() const;
 
 private:
     std::size_t size_;
