@@ -32,12 +32,19 @@ move looks like (x, y)
 
 
 ## Classes ##
-BOARD:
+## board:
 This class stores the board as a 2D grid, providing the size of the board, the get() and set() methods, and the isFull() method for checking.
 
-GAME:
+## game:
 This class manages the board and the players. It handles the moves and checks for winning players or if the board is full.
 
+## Dependencies ##
+- CMake 3.15 or higher
+- C++17 compiler
+- Git (to clone the repository)
+- SOMETHING FOR TESTING - NEED TO ASK LOUIS
+
+## Installing ##
 
 
 
