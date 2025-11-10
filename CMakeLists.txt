@@ -28,3 +28,34 @@ target_link_libraries(mttt
     PRIVATE
         tictactoe
 )
+
+# ----------------------
+# add googletest
+# ----------------------
+include(FetchContent)
+
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# Actually download and make the library available
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+# test executable
+add_executable(
+  hello_test
+  tests/hello_test.cc   # make sure your test file is here
+)
+
+target_link_libraries(
+  hello_test
+  PRIVATE
+    tictactoe            # link your library if needed
+    gtest_main           # GoogleTest main function
+)
+
+include(GoogleTest)
+gtest_discover_tests(hello_test)
+
