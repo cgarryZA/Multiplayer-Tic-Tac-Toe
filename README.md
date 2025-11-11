@@ -13,15 +13,14 @@ Each player is represented by their own symbol (e.g. 'X', 'O' etc)
 Each player takes a turn placing a symbol on the board until the board is full or the game is won (rules are described below)
 
 ## Game Format ##
-<img width="276" height="281" alt="image" src="https://github.com/user-attachments/assets/d178e02b-0858-479c-b2e5-9f47f88caa17" />
-
+```text
  2   X | O | 
     ---+---+---
  1   O | X |  
     ---+---+---
  0     |   |  
      0   1   2
-
+```
 move looks like (x, y)
 
 ## Rules ##
@@ -34,7 +33,7 @@ move looks like (x, y)
 
 ## Classes ##
 board:
-This class stores the board as a 2D grid, providing the size of the board, the get() and set() methods, and the isFull() method for checking.
+This class stores the board as a 2D grid, providing the size of the board, the `get()` and `set()` methods, and the `isFull()` method for checking.
 
 game:
 This class manages the board and the players. It handles the moves and checks for winning players or if the board is full.
@@ -48,8 +47,8 @@ This class manages the board and the players. It handles the moves and checks fo
 ## Installing ##
 - Clone the project and create a build directory inside the project folder
 - Use CMake to compile the project files
-- Run the executable from the terminal with ./mttt
-- Successful installation will be prompted with the command 'Enter number of players:'
+- Run the executable from the terminal with `./mttt`
+- Successful installation will be prompted with the command `'Enter number of players:'`
 
 ## Testing ##
 This project uses the GoogleTest (gtest) framework with test files located in the tests/ directory
