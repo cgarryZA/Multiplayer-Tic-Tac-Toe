@@ -78,9 +78,12 @@ jobs:
       - name: Run cppcheck
         run: |
           cppcheck --version
-          cppcheck --enable=warning,style,performance,portability \
-                   --error-exitcode=1 \
-                   --inline-suppr \
-                   --template=gcc \
-                   -I include \
-                   src tests
+          cppcheck \
+            --force \
+            --enable=warning,style,performance,portability \
+            --error-exitcode=1 \
+            --inline-suppr \
+            --template=gcc \
+            -I include \
+            --exclude=tests/third_party \
+            src tests
