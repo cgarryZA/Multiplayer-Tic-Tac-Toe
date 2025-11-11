@@ -1,29 +1,11 @@
 @echo off
-REM build.bat
+cd /d "%~dp0.."
 
-REM make build dir if missing
+rem make sure it's built
 if not exist build (
-    mkdir build
+    cmake -S . -B build
+    cmake --build build
 )
 
-REM configure + build
-cmake -S . -B build
-if errorlevel 1 (
-    echo CMake configure failed.
-    exit /b 1
-)
-
-cmake --build build
-if errorlevel 1 (
-    echo Build failed.
-    exit /b 1
-)
-
-REM run the program
-set EXE=build\mttt.exe
-if exist "%EXE%" (
-    echo Running %EXE% ...
-    "%EXE%"
-) else (
-    echo Could not find %EXE%
-)
+rem run the executable CMake produced
+build\mttt.exe
