@@ -8,13 +8,13 @@ public:
     Game();
 
     void init(int playerCount);
-    bool playTurn();
+    static std::size_t boardSize(std::size_t numPlayers);
+    bool               placeMove(int x, int y, char player);
+    char               checkWinner() const;
+    bool               playTurn();
 
 private:
-    char                     checkWinner() const;
     static bool              isBadBoardChar(char ch);
-    bool                     placeMove(int x, int y, char player);
-    static std::size_t       boardSize(std::size_t numPlayers);
     static std::vector<char> generateRandomSymbols(int count);
 
     Board             board_;
