@@ -15,16 +15,16 @@ PHASE 2
 Task allocations after second meeting 11/11/25 1:00pm
 
 Louis:
-	Game testing
+	game.cpp tests
 
 Christian:
-	main testing
-	Adding coverage
+	main.cpp tests
+	Adding test coverage
 
 Matt:
-	Both header testing
-	Adding multi-team feature
+	Both header file tests
+	Adding test driven multi-team feature
 
 Ailis:
-	board testing
-	bash commands to readme
+	board.cpp tests
+	Add bash commands to readme
