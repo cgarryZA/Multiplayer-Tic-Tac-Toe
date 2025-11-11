@@ -36,7 +36,7 @@ jobs:
         run: cmake --build build --config Release --parallel
 
       - name: Test (CTest)
-        run: ctest --test-dir build --output-on-failure --no-tests=error
+        run: ctest --test-dir build -C Release --output-on-failure --no-tests=error
 
       - name: Upload build dir (on failure)
         if: failure()
