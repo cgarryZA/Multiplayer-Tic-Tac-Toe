@@ -1,6 +1,7 @@
 // game.hpp
 #pragma once
 #include "board.h"
+#include <cstddef>
 #include <vector>
 
 class Game {

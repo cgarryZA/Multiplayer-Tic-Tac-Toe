@@ -138,7 +138,7 @@ char Game::checkWinner() const {
 bool Game::playTurn() {
   board_.print();
 
-  char current = players_[currentPlayer_];
+  char current = nextScheduledPlayer();
   std::cout << "Player " << current << " move (x y): ";
 
   int x, y;
@@ -165,7 +165,6 @@ bool Game::playTurn() {
     return false;
   }
 
-  currentPlayer_ = (currentPlayer_ + 1) % players_.size();
   return true;
 }
 
@@ -178,4 +177,44 @@ void Game::initWithPlayers(const std::vector<char>& players) {
   teamsMode_ = false;
   currentTeam_ = inChunkUsed_ = 0;
   chunkSize_ = 1;
+}
+
+void Game::enableTeams(const std::vector<std::vector<char>>& teams) {
+  std::vector<char> flat;
+  for (auto& t : teams) flat.insert(flat.end(), t.begin(), t.end());
+
+  auto has = [&](char c){
+    return std::find(players_.begin(), players_.end(), c) != players_.end();
+  };
+  for (char c : flat) { (void)has(c); }
+
+  std::size_t mx = 1;
+  teams_.clear();
+  teams_.reserve(teams.size());
+  for (auto& t : teams) {
+    Team T; T.members = t; T.memberIndex = 0;
+    teams_.push_back(std::move(T));
+    if (t.size() > mx) mx = t.size();
+  }
+  chunkSize_ = mx;
+  teamsMode_ = true;
+  currentTeam_ = 0;
+  inChunkUsed_ = 0;
+}
+
+char Game::nextScheduledPlayer() {
+  if (!teamsMode_) {
+    char p = players_[currentPlayer_];
+    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
+    return p;
+  }
+  if (inChunkUsed_ >= chunkSize_) {
+    inChunkUsed_ = 0;
+    currentTeam_ = (currentTeam_ + 1) % teams_.size();
+  }
+  Team& T = teams_[currentTeam_];
+  char player = T.members[T.memberIndex];
+  T.memberIndex = (T.memberIndex + 1) % T.members.size();
+  ++inChunkUsed_;
+  return player;
 }
