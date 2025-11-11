@@ -84,6 +84,6 @@ jobs:
             --error-exitcode=1 \
             --inline-suppr \
             --template=gcc \
-            --suppress=*tests/third_party/* \
+            --suppressions-list=cppcheck.suppress \
             -I include \
             src tests
