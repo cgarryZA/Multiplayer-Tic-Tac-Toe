@@ -15,10 +15,11 @@ Louis:
 
 Christian:
 	main testing
+	Adding coverage
 
 Matt:
 	Both header testing
-	Adding coverage
+	Adding multi-team feature
 
 Ailis:
 	board testing
