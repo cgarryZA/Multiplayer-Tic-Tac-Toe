@@ -21,6 +21,7 @@ endif()
 add_library(tictactoe
     src/board.cpp
     src/game.cpp
+    src/app.cpp
 )
 
 target_include_directories(tictactoe
