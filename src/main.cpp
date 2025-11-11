@@ -2,14 +2,14 @@
 #include <iostream>
 #include "game.h"
 
-int main()
+int run_app(std::istream& in, std::ostream& out)
 {
     Game game;
 
+    out << "Enter number of players: ";
     int players;
-    std::cout << "Enter number of players: ";
-    if (!(std::cin >> players)) {
-        std::cout << "Input ended.\n";
+    if (!(in >> players)) {
+        out << "Input ended.\n";
         return 0;
     }
 
@@ -20,4 +20,14 @@ int main()
     }
 
     return 0;
+}
+
+int main()
+{
+    try {
+        return run_app(std::cin, std::cout);
+    } catch (const std::exception& ex) {
+        std::cerr << "Error: " << ex.what() << "\n";
+        return 1;
+    }
 }
