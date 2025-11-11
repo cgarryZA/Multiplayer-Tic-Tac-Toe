@@ -6,215 +6,218 @@
 
 constexpr int MIN_PLAYERS = 2;
 
-Game::Game() : board_(3) {}
+Game::Game() : board_(3) {
+}
 
 void Game::init(int playerCount) {
-  if (playerCount < MIN_PLAYERS)
-    playerCount = MIN_PLAYERS;
+    if (playerCount < MIN_PLAYERS)
+        playerCount = MIN_PLAYERS;
 
-  players_ = generateRandomSymbols(playerCount);
-  currentPlayer_ = 0;
+    players_ = generateRandomSymbols(playerCount);
+    currentPlayer_ = 0;
 
-  board_.resize(boardSize(players_.size()));
+    board_.resize(boardSize(players_.size()));
 }
 
 std::size_t Game::boardSize(std::size_t numPlayers) { return numPlayers + 1; }
 
 bool Game::isBadBoardChar(char ch) {
-  return ch == '|' || ch == '+' || ch == ' ' || ch == '-';
+    return ch == '|' || ch == '+' || ch == ' ' || ch == '-';
 }
 
 std::vector<char> Game::generateRandomSymbols(int count) {
-  std::vector<char> result;
-  result.reserve(count);
+    std::vector<char> result;
+    result.reserve(count);
 
-  if (count >= 1)
-    result.push_back('X');
-  if (count >= 2)
-    result.push_back('O');
-  if ((int)result.size() >= count)
+    if (count >= 1)
+        result.push_back('X');
+    if (count >= 2)
+        result.push_back('O');
+    if ((int) result.size() >= count)
+        return result;
+
+    std::vector<char> pool;
+    for (int c = 33; c <= 126; ++c) {
+        char ch = static_cast<char>(c);
+        if (isBadBoardChar(ch))
+            continue;
+        if (ch == 'X' || ch == 'O')
+            continue;
+        pool.push_back(ch);
+    }
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::shuffle(pool.begin(), pool.end(), gen);
+
+    for (char ch: pool) {
+        if ((int) result.size() >= count)
+            break;
+        result.push_back(ch);
+    }
+
     return result;
-
-  std::vector<char> pool;
-  for (int c = 33; c <= 126; ++c) {
-    char ch = static_cast<char>(c);
-    if (isBadBoardChar(ch))
-      continue;
-    if (ch == 'X' || ch == 'O')
-      continue;
-    pool.push_back(ch);
-  }
-
-  static std::random_device rd;
-  static std::mt19937 gen(rd());
-  std::shuffle(pool.begin(), pool.end(), gen);
-
-  for (char ch : pool) {
-    if ((int)result.size() >= count)
-      break;
-    result.push_back(ch);
-  }
-
-  return result;
 }
 
 bool Game::placeMove(int x, int y, char player) {
-  if (x < 0 || y < 0)
-    return false;
-  if (x >= (int)board_.getSize() || y >= (int)board_.getSize())
-    return false;
-  if (board_.get(x, y) != ' ')
-    return false;
-  board_.set(x, y, player);
-  return true;
+    if (x < 0 || y < 0)
+        return false;
+    if (x >= (int) board_.getSize() || y >= (int) board_.getSize())
+        return false;
+    if (board_.get(x, y) != ' ')
+        return false;
+    board_.set(x, y, player);
+    return true;
 }
 
 char Game::checkWinner() const {
-  std::size_t size = board_.getSize();
+    std::size_t size = board_.getSize();
 
-  // rows
-  for (std::size_t y = 0; y < size; ++y) {
-    char first = board_.get(0, y);
-    if (first == ' ')
-      continue;
-    bool allSame = true;
-    for (std::size_t x = 1; x < size; ++x)
-      if (board_.get(x, y) != first) {
-        allSame = false;
-        break;
-      }
-    if (allSame)
-      return first;
-  }
-
-  // cols
-  for (std::size_t x = 0; x < size; ++x) {
-    char first = board_.get(x, 0);
-    if (first == ' ')
-      continue;
-    bool allSame = true;
-    for (std::size_t y = 1; y < size; ++y)
-      if (board_.get(x, y) != first) {
-        allSame = false;
-        break;
-      }
-    if (allSame)
-      return first;
-  }
-
-  // main diag
-  {
-    char first = board_.get(0, 0);
-    if (first != ' ') {
-      bool allSame = true;
-      for (std::size_t i = 1; i < size; ++i)
-        if (board_.get(i, i) != first) {
-          allSame = false;
-          break;
-        }
-      if (allSame)
-        return first;
+    // rows
+    for (std::size_t y = 0; y < size; ++y) {
+        char first = board_.get(0, y);
+        if (first == ' ')
+            continue;
+        bool allSame = true;
+        for (std::size_t x = 1; x < size; ++x)
+            if (board_.get(x, y) != first) {
+                allSame = false;
+                break;
+            }
+        if (allSame)
+            return first;
     }
-  }
 
-  // anti diag
-  {
-    char first = board_.get(size - 1, 0);
-    if (first != ' ') {
-      bool allSame = true;
-      for (std::size_t i = 1; i < size; ++i)
-        if (board_.get(size - 1 - i, i) != first) {
-          allSame = false;
-          break;
-        }
-      if (allSame)
-        return first;
+    // cols
+    for (std::size_t x = 0; x < size; ++x) {
+        char first = board_.get(x, 0);
+        if (first == ' ')
+            continue;
+        bool allSame = true;
+        for (std::size_t y = 1; y < size; ++y)
+            if (board_.get(x, y) != first) {
+                allSame = false;
+                break;
+            }
+        if (allSame)
+            return first;
     }
-  }
 
-  return ' ';
+    // main diag
+    {
+        char first = board_.get(0, 0);
+        if (first != ' ') {
+            bool allSame = true;
+            for (std::size_t i = 1; i < size; ++i)
+                if (board_.get(i, i) != first) {
+                    allSame = false;
+                    break;
+                }
+            if (allSame)
+                return first;
+        }
+    }
+
+    // anti diag
+    {
+        char first = board_.get(size - 1, 0);
+        if (first != ' ') {
+            bool allSame = true;
+            for (std::size_t i = 1; i < size; ++i)
+                if (board_.get(size - 1 - i, i) != first) {
+                    allSame = false;
+                    break;
+                }
+            if (allSame)
+                return first;
+        }
+    }
+
+    return ' ';
 }
 
 bool Game::playTurn() {
-  board_.print();
+    board_.print();
 
-  char current = nextScheduledPlayer();
-  std::cout << "Player " << current << " move (x y): ";
+    char current = nextScheduledPlayer();
+    std::cout << "Player " << current << " move (x y): ";
 
-  int x, y;
-  if (!(std::cin >> x >> y)) {
-    std::cout << "Input ended.\n";
-    return false;
-  }
+    int x, y;
+    if (!(std::cin >> x >> y)) {
+        std::cout << "Input ended.\n";
+        return false;
+    }
 
-  if (!placeMove(x, y, current)) {
-    std::cout << "Invalid move, try again.\n";
+    if (!placeMove(x, y, current)) {
+        std::cout << "Invalid move, try again.\n";
+        return true;
+    }
+
+    char winner = checkWinner();
+    if (winner != ' ') {
+        board_.print();
+        std::cout << "Player " << winner << " wins!\n";
+        return false;
+    }
+
+    if (board_.isFull()) {
+        board_.print();
+        std::cout << "It's a draw.\n";
+        return false;
+    }
+
     return true;
-  }
-
-  char winner = checkWinner();
-  if (winner != ' ') {
-    board_.print();
-    std::cout << "Player " << winner << " wins!\n";
-    return false;
-  }
-
-  if (board_.isFull()) {
-    board_.print();
-    std::cout << "It's a draw.\n";
-    return false;
-  }
-
-  return true;
 }
 
-void Game::initWithPlayers(const std::vector<char>& players) {
-  players_ = players;
-  currentPlayer_ = 0;
-  board_.resize(boardSize(players_.size()));
+void Game::initWithPlayers(const std::vector<char> &players) {
+    players_ = players;
+    currentPlayer_ = 0;
+    board_.resize(boardSize(players_.size()));
 
-  teams_.clear();
-  teamsMode_ = false;
-  currentTeam_ = inChunkUsed_ = 0;
-  chunkSize_ = 1;
+    teams_.clear();
+    teamsMode_ = false;
+    currentTeam_ = inChunkUsed_ = 0;
+    chunkSize_ = 1;
 }
 
-void Game::enableTeams(const std::vector<std::vector<char>>& teams) {
-  std::vector<char> flat;
-  for (auto& t : teams) flat.insert(flat.end(), t.begin(), t.end());
+void Game::enableTeams(const std::vector<std::vector<char> > &teams) {
+    std::vector<char> flat;
+    for (auto &t: teams) flat.insert(flat.end(), t.begin(), t.end());
 
-  auto has = [&](char c){
-    return std::find(players_.begin(), players_.end(), c) != players_.end();
-  };
-  for (char c : flat) { (void)has(c); }
+    auto has = [&](char c) {
+        return std::find(players_.begin(), players_.end(), c) != players_.end();
+    };
+    for (char c: flat) { (void) has(c); }
 
-  std::size_t mx = 1;
-  teams_.clear();
-  teams_.reserve(teams.size());
-  for (auto& t : teams) {
-    Team T; T.members = t; T.memberIndex = 0;
-    teams_.push_back(std::move(T));
-    if (t.size() > mx) mx = t.size();
-  }
-  chunkSize_ = mx;
-  teamsMode_ = true;
-  currentTeam_ = 0;
-  inChunkUsed_ = 0;
+    std::size_t mx = 1;
+    teams_.clear();
+    teams_.reserve(teams.size());
+    for (auto &t: teams) {
+        Team T;
+        T.members = t;
+        T.memberIndex = 0;
+        teams_.push_back(std::move(T));
+        if (t.size() > mx) mx = t.size();
+    }
+    chunkSize_ = mx;
+    teamsMode_ = true;
+    currentTeam_ = 0;
+    inChunkUsed_ = 0;
 }
 
 char Game::nextScheduledPlayer() {
-  if (!teamsMode_) {
-    char p = players_[currentPlayer_];
-    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
-    return p;
-  }
-  if (inChunkUsed_ >= chunkSize_) {
-    inChunkUsed_ = 0;
-    currentTeam_ = (currentTeam_ + 1) % teams_.size();
-  }
-  Team& T = teams_[currentTeam_];
-  char player = T.members[T.memberIndex];
-  T.memberIndex = (T.memberIndex + 1) % T.members.size();
-  ++inChunkUsed_;
-  return player;
+    if (!teamsMode_) {
+        char p = players_[currentPlayer_];
+        currentPlayer_ = (currentPlayer_ + 1) % players_.size();
+        return p;
+    }
+    if (inChunkUsed_ >= chunkSize_) {
+        inChunkUsed_ = 0;
+        currentTeam_ = (currentTeam_ + 1) % teams_.size();
+    }
+    Team &T = teams_[currentTeam_];
+    char player = T.members[T.memberIndex];
+    T.memberIndex = (T.memberIndex + 1) % T.members.size();
+    ++inChunkUsed_;
+    return player;
 }
