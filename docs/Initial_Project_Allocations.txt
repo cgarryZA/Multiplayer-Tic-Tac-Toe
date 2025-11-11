@@ -7,3 +7,19 @@ Matt:
 	Base CI github actions
 Ailis:
 	Github readme according the coursework spec
+
+
+
+Louis:
+	Game testing
+
+Christian:
+	main testing
+
+Matt:
+	Both header testing
+	Adding coverage
+
+Ailis:
+	board testing
+	bash commands to readme
