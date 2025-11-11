@@ -35,6 +35,7 @@ target_link_libraries(mttt
 # ---- Unit tests (doctest) ----
 add_executable(unit_tests
     tests/test_game.cpp
+    tests/test_teams.cpp
 )
 target_include_directories(unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
