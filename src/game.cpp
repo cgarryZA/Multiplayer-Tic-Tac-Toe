@@ -168,3 +168,14 @@ bool Game::playTurn() {
   currentPlayer_ = (currentPlayer_ + 1) % players_.size();
   return true;
 }
+
+void Game::initWithPlayers(const std::vector<char>& players) {
+  players_ = players;
+  currentPlayer_ = 0;
+  board_.resize(boardSize(players_.size()));
+
+  teams_.clear();
+  teamsMode_ = false;
+  currentTeam_ = inChunkUsed_ = 0;
+  chunkSize_ = 1;
+}
