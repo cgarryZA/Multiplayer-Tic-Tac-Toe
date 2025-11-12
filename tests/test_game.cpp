@@ -44,7 +44,22 @@ TEST_CASE("Making moves for multiple players") {
     }
 }
 
+TEST_CASE("Draw scenario for multiple players") {
+    Game g;
 
+    for (int players = 2; players <= 3; ++players) { 
+        int size = g.boardSize(players);
+        int current_player = 1;
+        for (int r = 0; r < size; ++r) {
+            for (int c = 0; c < size; ++c) {
+                g.makeMove(current_player, r, c);
+                current_player = (current_player % players) + 1;
+            }
+        }
+
+        CHECK(g.checkWinner() == 0); 
+    }
+}
 
 TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
   Game g;
