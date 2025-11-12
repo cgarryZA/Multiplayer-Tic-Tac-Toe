@@ -24,7 +24,7 @@ TEST_CASE("resize() correctly resizes board re-initialises to empty cell") {
 Board b(3);
 CHECK(b.getSize() == 3);
 b.set(0, 1, 'X');
-CHECK(b.get(0, 0) == 'X');
+CHECK(b.get(0, 1) == 'X');
 b.resize(4);
 CHECK(b.getSize() == 4);
 for (std::size_t y = 0; y < b.getSize(); ++y)
