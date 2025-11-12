@@ -42,7 +42,6 @@ This class manages the board and the players. It handles the moves and checks fo
 - CMake 3.15 or higher
 - C++17 compiler
 - Git (to clone the repository)
-- SOMETHING FOR TESTING
 
 ## Installing ##
 - **Clone the project and create a build directory inside the project folder**
@@ -76,5 +75,3 @@ This project uses the `doctest` framework with test files located in the `tests/
 ## LICENSE ##
 This project is released under the MIT License. See the LICENSE file for details.
 
-
-ADD TESTING DETAILS
