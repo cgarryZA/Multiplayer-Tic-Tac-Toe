@@ -49,3 +49,18 @@ if (BUILD_TESTS)
     add_test(NAME unit_all COMMAND unit_tests)
     add_test(NAME unit_app_only COMMAND unit_tests --test-case "app:*")
 endif()
+
+# Format check target
+find_program(CLANG_FORMAT_EXE NAMES clang-format)
+if (CLANG_FORMAT_EXE)
+  add_custom_target(format-check
+    COMMAND ${CLANG_FORMAT_EXE} -n -Werror --style=file ${ALL_CODE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running clang-format check"
+  )
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT_EXE} -i --style=file ${ALL_CODE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Applying clang-format"
+  )
+endif()

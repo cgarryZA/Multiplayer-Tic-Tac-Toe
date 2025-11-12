@@ -55,6 +55,3 @@ TEST_CASE("checkWinner detects an antidiagonal win") {
   CHECK(g.placeMove(2, 0, 'O'));
   CHECK(g.checkWinner() == 'O');
 }
-
-
-
