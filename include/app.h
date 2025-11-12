@@ -10,4 +10,5 @@
 
 int run_app(std::istream& in,
             std::ostream& out,
-            std::function<void()> game_loop = {});
+            const std::function<bool(int players)>& init_fn,
+            const std::function<bool()>& turn_fn);

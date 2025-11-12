@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>game.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+// src/game.cpp
+
+#include "game.h"
+#include &lt;iostream&gt;
+#include &lt;random&gt;
+#include &lt;algorithm&gt;
+
+constexpr int MIN_PLAYERS = 2;
+
+<span style = "background-color:#dfd">Game::Game() : board_(3) {}</span>
+
+void Game::init(int playerCount)
+<span style = "background-color:#dfd">{
+    if (playerCount &lt; MIN_PLAYERS)</span>
+<span style = "background-color:#fdd">        playerCount = MIN_PLAYERS;</span>
+
+<span style = "background-color:#dfd">    players_ = generateRandomSymbols(playerCount);
+    currentPlayer_ = 0;</span>
+
+<span style = "background-color:#dfd">    board_.resize(boardSize(players_.size()));
+}</span>
+
+std::size_t Game::boardSize(std::size_t numPlayers)
+<span style = "background-color:#dfd">{
+    return numPlayers + 1;
+}</span>
+
+bool Game::isBadBoardChar(char ch)
+<span style = "background-color:#fdd">{
+    return ch == '|' || ch == '+' || ch == ' ' || ch == '-';
+}</span>
+
+std::vector&lt;char&gt; Game::generateRandomSymbols(int count)
+<span style = "background-color:#dfd">{
+    std::vector&lt;char&gt; result;
+    result.reserve(count);</span>
+
+<span style = "background-color:#dfd">    if (count &gt;= 1) result.push_back('X');
+    if (count &gt;= 2) result.push_back('O');
+    if ((int)result.size() &gt;= count)
+        return result;</span>
+
+<span style = "background-color:#fdd">    std::vector&lt;char&gt; pool;
+    for (int c = 33; c &lt;= 126; ++c)</span>
+    {
+<span style = "background-color:#fdd">        char ch = static_cast&lt;char&gt;(c);
+        if (isBadBoardChar(ch)) continue;
+        if (ch == 'X' || ch == 'O') continue;
+        pool.push_back(ch);
+    }</span>
+
+    static std::random_device rd;
+<span style = "background-color:#fdd">    static std::mt19937 gen(rd());
+    std::shuffle(pool.begin(), pool.end(), gen);</span>
+
+<span style = "background-color:#fdd">    for (char ch : pool)</span>
+    {
+<span style = "background-color:#fdd">        if ((int)result.size() &gt;= count) break;
+        result.push_back(ch);
+    }</span>
+
+<span style = "background-color:#fdd">    return result;</span>
+<span style = "background-color:#dfd">}</span>
+
+bool Game::placeMove(int x, int y, char player)
+<span style = "background-color:#dfd">{
+    if (x &lt; 0 || y &lt; 0) return false;
+    if (x &gt;= (int)board_.getSize() || y &gt;= (int)board_.getSize()) return false;
+    if (board_.get(x, y) != ' ') return false;
+    board_.set(x, y, player);
+    return true;
+}</span>
+
+char Game::checkWinner() const
+<span style = "background-color:#dfd">{
+    std::size_t size = board_.getSize();</span>
+
+    // rows
+<span style = "background-color:#dfd">    for (std::size_t y = 0; y &lt; size; ++y)</span>
+    {
+<span style = "background-color:#dfd">        char first = board_.get(0, y);
+        if (first == ' ') continue;
+        bool allSame = true;
+        for (std::size_t x = 1; x &lt; size; ++x)
+            if (board_.get(x, y) != first) { allSame = false; break; }
+        if (allSame) return first;</span>
+<span style = "background-color:#fdd">    }</span>
+
+    // cols
+<span style = "background-color:#fdd">    for (std::size_t x = 0; x &lt; size; ++x)</span>
+    {
+<span style = "background-color:#fdd">        char first = board_.get(x, 0);
+        if (first == ' ') continue;
+        bool allSame = true;
+        for (std::size_t y = 1; y &lt; size; ++y)
+            if (board_.get(x, y) != first) { allSame = false; break; }
+        if (allSame) return first;
+    }</span>
+
+    // main diag
+    {
+<span style = "background-color:#fdd">        char first = board_.get(0, 0);
+        if (first != ' ') {
+            bool allSame = true;
+            for (std::size_t i = 1; i &lt; size; ++i)
+                if (board_.get(i, i) != first) { allSame = false; break; }
+            if (allSame) return first;</span>
+        }
+    }
+
+    // anti diag
+    {
+<span style = "background-color:#fdd">        char first = board_.get(size - 1, 0);
+        if (first != ' ') {
+            bool allSame = true;
+            for (std::size_t i = 1; i &lt; size; ++i)
+                if (board_.get(size - 1 - i, i) != first) { allSame = false; break; }
+            if (allSame) return first;</span>
+        }
+    }
+
+<span style = "background-color:#fdd">    return ' ';</span>
+<span style = "background-color:#dfd">}</span>
+
+bool Game::playTurn()
+<span style = "background-color:#fdd">{
+    board_.print();</span>
+
+<span style = "background-color:#fdd">    char current = players_[currentPlayer_];
+    std::cout &lt;&lt; "Player " &lt;&lt; current &lt;&lt; " move (x y): ";</span>
+
+    int x, y;
+<span style = "background-color:#fdd">    if (!(std::cin &gt;&gt; x &gt;&gt; y))</span>
+    {
+<span style = "background-color:#fdd">        std::cout &lt;&lt; "Input ended.\n";
+        return false;</span>
+    }
+
+<span style = "background-color:#fdd">    if (!placeMove(x, y, current))</span>
+    {
+<span style = "background-color:#fdd">        std::cout &lt;&lt; "Invalid move, try again.\n";
+        return true;</span>
+    }
+
+<span style = "background-color:#fdd">    char winner = checkWinner();
+    if (winner != ' ')</span>
+    {
+<span style = "background-color:#fdd">        board_.print();
+        std::cout &lt;&lt; "Player " &lt;&lt; winner &lt;&lt; " wins!\n";
+        return false;</span>
+    }
+
+<span style = "background-color:#fdd">    if (board_.isFull())</span>
+    {
+<span style = "background-color:#fdd">        board_.print();
+        std::cout &lt;&lt; "It's a draw.\n";
+        return false;</span>
+    }
+
+<span style = "background-color:#fdd">    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
+    return true;
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>

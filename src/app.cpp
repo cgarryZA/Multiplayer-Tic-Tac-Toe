@@ -1,16 +1,15 @@
 // src/app.cpp
-
 #include "app.h"
-#include "game.h"
 #include "codes.h"
-#include <string>
+
+#include <iostream>
+#include <functional>
 
 int run_app(std::istream& in,
             std::ostream& out,
-            std::function<void()> game_loop)
+            const std::function<bool(int)>& init_fn,
+            const std::function<bool()>& turn_fn)
 {
-    Game game;
-
     out << "Enter number of players: ";
     int players;
     if (!(in >> players)) {
@@ -22,13 +21,13 @@ int run_app(std::istream& in,
         return APP_INPUT_INVALID;
     }
 
-    game.init(players);
+    if (!init_fn(players)) {
+        out << "Failed to init.\n";
+        return APP_INPUT_INVALID;
+    }
 
-    if (game_loop) {
-        game_loop();
-    } else {
-        while (game.playTurn()) {
-        }
+    while (turn_fn()) {
+        // keep playing turns
     }
 
     return APP_OK;
