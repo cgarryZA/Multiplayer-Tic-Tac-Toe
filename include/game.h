@@ -1,5 +1,6 @@
 // game.hpp
 #pragma once
+#include <unordered_map>
 #include "board.h"
 #include <cstddef>
 #include <vector>
