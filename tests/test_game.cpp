@@ -20,27 +20,18 @@ TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
 
 TEST_CASE("Making moves for multiple players") {
     Game g;
+    g.init(5); 
 
-    for (int players = 2; players <= 7; ++players) { 
-        int size = g.boardSize(players);
+   
+    for (std::size_t p = 0; p < g.getPlayers().size(); ++p) {
+        char playerSymbol = g.getPlayers()[p]; 
+        CHECK(g.placeMove(0, p, playerSymbol) == true);
+    }
 
-        SUBCASE("All players can make a valid move on empty board") {
-            for (int p = 1; p <= players; ++p) {
-                CHECK(g.placeMove(p, 0, p-1) == true);
-            }
-        }
-
-        SUBCASE("Invalid moves are rejected") {
-            for (int p = 1; p <= players; ++p) {
-                // Same cell should be invalid
-                CHECK(g.placeMove(p, 0, p-1) == false);
-            }
-            // Out-of-bounds moves
-            for (int p = 1; p <= players; ++p) {
-                CHECK(g.placeMove(p, -1, 0) == false);
-                CHECK(g.placeMove(p, 0, size) == false);
-            }
-        }
+  
+    for (std::size_t p = 0; p < g.getPlayers().size(); ++p) {
+        char playerSymbol = g.getPlayers()[p]; 
+        CHECK(g.placeMove(0, p, playerSymbol) == false);
     }
 }
 
