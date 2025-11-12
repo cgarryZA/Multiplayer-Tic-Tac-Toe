@@ -1,5 +1,6 @@
 .vscode
 build
+build_debug
 
 # Created by https://www.toptal.com/developers/gitignore/api/c++,macos,windows,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=c++,macos,windows,linux

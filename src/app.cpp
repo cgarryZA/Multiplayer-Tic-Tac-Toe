@@ -1,9 +1,13 @@
 // src/app.cpp
+
 #include "app.h"
 #include "game.h"
-#include <iostream>
+#include "codes.h"
+#include <string>
 
-int run_app(std::istream& in, std::ostream& out)
+int run_app(std::istream& in,
+            std::ostream& out,
+            std::function<void()> game_loop)
 {
     Game game;
 
@@ -11,14 +15,21 @@ int run_app(std::istream& in, std::ostream& out)
     int players;
     if (!(in >> players)) {
         out << "Input ended.\n";
-        return 0;
+        return APP_INPUT_EOF;
+    }
+    if (players <= 0) {
+        out << "Invalid number of players.\n";
+        return APP_INPUT_INVALID;
     }
 
     game.init(players);
 
-    while (game.playTurn()) {
-        // play
+    if (game_loop) {
+        game_loop();
+    } else {
+        while (game.playTurn()) {
+        }
     }
 
-    return 0;
+    return APP_OK;
 }

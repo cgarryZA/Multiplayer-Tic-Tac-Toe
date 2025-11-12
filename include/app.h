@@ -1,5 +1,13 @@
 // include/app.h
+
 #pragma once
 #include <iosfwd>
+#include <functional>
 
-int run_app(std::istream& in, std::ostream& out);
+// run_app is separated from main() so it can be unit-tested with
+// doctest/CTest by injecting std::istringstream/std::ostringstream.
+// This keeps main.cpp trivial and improves CI coverage.
+
+int run_app(std::istream& in,
+            std::ostream& out,
+            std::function<void()> game_loop = {});

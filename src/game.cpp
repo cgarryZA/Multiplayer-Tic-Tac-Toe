@@ -1,4 +1,5 @@
-// game.cpp
+// src/game.cpp
+
 #include "game.h"
 #include <iostream>
 #include <random>

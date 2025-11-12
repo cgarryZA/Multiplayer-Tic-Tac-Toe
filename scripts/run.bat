@@ -1,11 +1,9 @@
 @echo off
 cd /d "%~dp0.."
 
-rem make sure it's built
-if not exist build (
-    cmake -S . -B build
-    cmake --build build
+if not exist build_debug (
+    cmake -S . -B build_debug -DBUILD_TESTS=ON
+    cmake --build build_debug --config Debug
 )
 
-rem run the executable CMake produced
-build\mttt.exe
+build_debug\Debug\mttt.exe
