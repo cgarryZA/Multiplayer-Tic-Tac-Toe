@@ -7,6 +7,9 @@
 TEST_CASE("boardSize grows with number of players") {
   CHECK(Game::boardSize(2) == 3);
   CHECK(Game::boardSize(3) == 4);
+  CHECK(Game::boardSize(4) == 5);
+  CHECK(Game::boardSize(5) == 6);
+  CHECK(Game::boardSize(6) == 7);
 }
 
 TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
@@ -56,7 +59,7 @@ TEST_CASE("checkWinner detects an antidiagonal win") {
 
 TEST_CASE("checkWinner returns none when there is no win yet") {
   Game g;
-  g.init(2)
+  g.init(2);
   g.placeMove(0, 0, 'X');
   g.placeMove(0, 0, 'O');
   g.placeMove(2, 2, 'X');
@@ -65,7 +68,7 @@ TEST_CASE("checkWinner returns none when there is no win yet") {
 
 TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
   Game g;
-  g.init(2)
+  g.init(2);
   g.placeMove(0, 0, 'X');
   g.placeMove(0, 1, 'O');
   g.placeMove(0, 2, 'X');
@@ -80,7 +83,7 @@ TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
 
 TEST_CASE("checkWinner detects win on a full board") {
   Game g;
-  g.init(2)
+  g.init(2);
   g.placeMove(0, 0, 'X');
   g.placeMove(0, 1, 'O');
   g.placeMove(0, 2, 'X');
@@ -100,6 +103,3 @@ TEST_CASE("Init clears previous moves") {
   g.init(2);
   CHECK(g.plaveMove(0,0,'O'));
 }
-
-TEST_CASE("init clears previous moves") {
-  Game gl
