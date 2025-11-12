@@ -26,23 +26,25 @@ TEST_CASE("Making moves for multiple players") {
     }
 }
 
-TEST_CASE("Draw scenario for multiple players") {
+TTEST_CASE("Draw scenario for multiple players") {
     Game g;
     g.init(3); // 3 players
 
-    char players[] = {'X', 'O', 'A'};
-    int size = 4; // 3 + 1
+    // Fill board carefully to avoid any winning line
+    char drawBoard[4][4] = {
+        {'X', 'O', 'A', 'O'},
+        {'O', 'A', 'X', 'A'},
+        {'A', 'X', 'O', 'X'},
+        {'O', 'A', 'X', 'O'}
+    };
 
-    int idx = 0;
-    for (int y = 0; y < size; ++y) {
-        for (int x = 0; x < size; ++x) {
-            g.placeMove(x, y, players[idx % 3]);
-            ++idx;
+    for (int y = 0; y < 4; ++y) {
+        for (int x = 0; x < 4; ++x) {
+            g.placeMove(x, y, drawBoard[y][x]);
         }
     }
 
-    // Game returns ' ' (space) when no winner
-    CHECK(g.checkWinner() == ' ');
+    CHECK(g.checkWinner() == ' '); // no winner
 }
 
 TEST_CASE("checkWinner detects win on a full board") {
