@@ -156,7 +156,7 @@ bool Game::playTurn() {
         board_.print();
         if (teamsMode_) {
             int tid = teamIndexOf(winner);
-            std::cout << "Team " << tid << " wins (line completed by '" << winner << "').\n";
+            std::cout << "Team " << tid << " wins \n";
         } else {
             std::cout << "Player " << winner << " wins!\n";
         }

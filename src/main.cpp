@@ -4,17 +4,16 @@
 #include <unordered_set>
 #include <cctype>
 
-static std::vector<std::vector<char>>
-parseTeamsLine(const std::string& line, const std::vector<char>& roster)
-{
+static std::vector<std::vector<char> >
+parseTeamsLine(const std::string &line, const std::vector<char> &roster) {
     std::unordered_set<char> rosterSet(roster.begin(), roster.end());
 
-    auto is_all_digits = [](const std::string& s){
+    auto is_all_digits = [](const std::string &s) {
         return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
     };
 
     // Split by '|'
-    std::vector<std::vector<char>> teams;
+    std::vector<std::vector<char> > teams;
     std::istringstream top(line);
     std::string teamChunk;
     while (std::getline(top, teamChunk, '|')) {
@@ -42,8 +41,8 @@ parseTeamsLine(const std::string& line, const std::vector<char>& roster)
 
     // Validate coverage & duplicates: each roster member must appear exactly once
     std::unordered_set<char> seen;
-    for (auto& t : teams)
-        for (char c : t) {
+    for (auto &t: teams)
+        for (char c: t) {
             if (!rosterSet.count(c)) throw std::runtime_error("Unknown player in team");
             if (!seen.insert(c).second) throw std::runtime_error("Duplicate player in teams");
         }
@@ -69,13 +68,14 @@ int main() {
     game.init(players);
 
     // Show roster so users know symbols
-    const auto& roster = game.players();
+    const auto &roster = game.players();
     std::cout << "Players: ";
     for (std::size_t i = 0; i < roster.size(); ++i) {
-        std::cout << "[" << (i+1) << ":" << roster[i] << "] ";
+        std::cout << "[" << (i + 1) << ":" << roster[i] << "] ";
     }
     std::cout << "\nEnable teams? (y/n): ";
-    char yn; std::cin >> yn;
+    char yn;
+    std::cin >> yn;
 
     if (yn == 'y' || yn == 'Y') {
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // eat EOL
@@ -93,7 +93,7 @@ int main() {
             auto teams = parseTeamsLine(line, roster);
             game.enableTeams(teams);
             std::cout << "Teams enabled.\n";
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cout << "Invalid teams: " << e.what() << "\nContinuing without teams.\n";
         }
     }

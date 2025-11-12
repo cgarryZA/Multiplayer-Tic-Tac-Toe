@@ -24,7 +24,7 @@ public:
 
     bool playTurn();
 
-    const std::vector<char>& players() const { return players_; }
+    const std::vector<char> &players() const { return players_; }
 
 private:
     std::unordered_map<char, std::size_t> playerToTeam_;
