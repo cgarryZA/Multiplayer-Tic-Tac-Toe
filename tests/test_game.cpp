@@ -19,6 +19,7 @@ TEST_CASE("boardSize grows with number of players") {
     std::size_t size = g.checkWinner();
     CHECK(g.boardSize(players) == g.board_.getSize());
     CHECK(g.board_.getSize() == players + 1);
+  }
 }
 
 TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
@@ -87,7 +88,7 @@ TEST_CASE("detects wins on all board sizes") {
 
     //Row win
     g.init(players);
-    for (int i = 0; i < n; ++i) g.placeMove(x, 0, 'X');
+    for (int i = 0; i < n; ++i) g.placeMove(i, 0, 'X');
     CHECK(g.checkWinner() == 'X');
 
     //Column win
@@ -142,5 +143,5 @@ TEST_CASE("Init clears previous moves") {
   g.init(2);
   g.placeMove(0,0,'X');
   g.init(2);
-  CHECK(g.plaveMove(0,0,'O'));
+  CHECK(g.placeMove(0,0,'O'));
 }
