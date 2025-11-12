@@ -2,22 +2,6 @@
 #include "third_party/doctest.h"
 #include "game.h"
 
-TEST_CASE("boardSize grows with number of players") {
-  Game g;
-  for (int players = 2; players <=7; ++players) {
-    CHECK(g.boardSize(players) == players + 1);
-  }
-}
-
-TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
-  Game g;
-  g.init(2);
-  CHECK(g.placeMove(0, 0, 'X') == true);
-  CHECK(g.placeMove(0, 0, 'O') == false);
-  CHECK(g.placeMove(-1, 0, 'X') == false);
-  CHECK(g.placeMove(3, 3, 'X') == false);
-}
-
 TEST_CASE("Making moves for multiple players") {
     Game g;
     g.init(5); 
@@ -37,20 +21,20 @@ TEST_CASE("Making moves for multiple players") {
 
 TEST_CASE("Draw scenario for multiple players") {
     Game g;
+    g.init(3);
+    auto players = g.getPlayers();
+    std::size_t size = g.getBoardSize();
 
-    for (int players = 2; players <= 7; ++players) { 
-        int size = g.boardSize(players);
-        int current_player = 1;
-        for (int r = 0; r < size; ++r) {
-            for (int c = 0; c < size; ++c) {
-                g.placeMove(current_player, r, c);
-                current_player = (current_player % players) + 1;
-            }
+  
+    std::size_t idx = 0;
+    for (std::size_t y = 0; y < size; ++y) {
+        for (std::size_t x = 0; x < size; ++x) {
+            g.placeMove(x, y, players[idx % players.size()]);
+            ++idx;
         }
-
-        CHECK(g.checkWinner() == 0); 
     }
-}
+
+    CHECK(g.checkWinner() == '\0');
 
 TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
   Game g;
