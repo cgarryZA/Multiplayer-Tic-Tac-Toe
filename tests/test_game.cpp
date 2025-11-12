@@ -4,20 +4,21 @@
 
 TEST_CASE("Making moves for multiple players") {
     Game g;
-    g.init(5); 
+    g.init(5); // 5 players
 
-    const auto& players = g.getPlayers();  
+    const auto& players = g.getPlayers();
+    std::size_t boardSize = g.getBoardSize();
 
-   
+    // Each player makes a valid move on first column
     for (std::size_t p = 0; p < players.size(); ++p) {
         char playerSymbol = players[p];
-        CHECK(g.placeMove(0, p, playerSymbol) == true);
+        CHECK(g.placeMove(p, 0, playerSymbol) == true);
     }
 
- 
+    // Same cells cannot be reused
     for (std::size_t p = 0; p < players.size(); ++p) {
         char playerSymbol = players[p];
-        CHECK(g.placeMove(0, p, playerSymbol) == false);
+        CHECK(g.placeMove(p, 0, playerSymbol) == false);
     }
 }
 
