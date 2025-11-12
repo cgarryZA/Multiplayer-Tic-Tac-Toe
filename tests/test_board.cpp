@@ -42,6 +42,6 @@ TEST_CASE("isFull() gives True if all cells are occupied") {
 Board b(3);
 for (std::size_t y = 0; y < b.getSize(); ++y)
   for (std::size_t x = 0; x < b.getSize(); ++x)
-    CHECK(b.set(x, y) == 'X');
+    b.set(x, y, 'X');
 CHECK(b.isFull() == true);
 }
