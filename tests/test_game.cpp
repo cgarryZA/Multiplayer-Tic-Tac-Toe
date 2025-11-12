@@ -47,7 +47,7 @@ TEST_CASE("Making moves for multiple players") {
 TEST_CASE("Draw scenario for multiple players") {
     Game g;
 
-    for (int players = 2; players <= 3; ++players) { 
+    for (int players = 2; players <= 7; ++players) { 
         int size = g.boardSize(players);
         int current_player = 1;
         for (int r = 0; r < size; ++r) {
