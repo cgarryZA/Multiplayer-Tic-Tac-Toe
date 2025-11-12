@@ -4,18 +4,16 @@
 
 TEST_CASE("Making moves for multiple players") {
     Game g;
-    g.init(5); // 5 players
+    g.init(5); 
 
     const auto& players = g.getPlayers();
     std::size_t boardSize = g.getBoardSize();
 
-    // Each player makes a valid move on first column
     for (std::size_t p = 0; p < players.size(); ++p) {
         char playerSymbol = players[p];
         CHECK(g.placeMove(p, 0, playerSymbol) == true);
     }
 
-    // Same cells cannot be reused
     for (std::size_t p = 0; p < players.size(); ++p) {
         char playerSymbol = players[p];
         CHECK(g.placeMove(p, 0, playerSymbol) == false);
@@ -36,7 +34,6 @@ TEST_CASE("Draw scenario for multiple players") {
         }
     }
 
-    // Game returns ' ' (space) when no winner
     CHECK(g.checkWinner() == ' ');
 }
 
