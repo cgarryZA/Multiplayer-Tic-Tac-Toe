@@ -22,7 +22,7 @@ TEST_CASE("Making moves for multiple players") {
     }
 }
 
-TTEST_CASE("Draw scenario for multiple players") {
+TEST_CASE("Draw scenario for multiple players") {
     Game g;
     g.init(3); 
 
