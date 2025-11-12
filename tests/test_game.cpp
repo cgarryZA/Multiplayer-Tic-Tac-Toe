@@ -76,4 +76,4 @@ TEST_CASE("checkWinner detects diagonal win") {
   }
 
   CHECK(g.checkWinner() == players[2]);
-}
+} 
