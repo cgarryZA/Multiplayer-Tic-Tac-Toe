@@ -1,21 +1,22 @@
-// src/main.cpp
-
-#include <iostream>
-#include "app.h"
+// main.cpp
 #include "game.h"
+#include <iostream>
 
-int main()
-{
-    Game game;
+int main() {
+  Game game;
 
-    auto init = [&game](int players) -> bool {
-        game.init(players);
-        return true;
-    };
+  int players;
+  std::cout << "Enter number of players: ";
+  if (!(std::cin >> players)) {
+    std::cout << "Input ended.\n";
+    return 0;
+  }
 
-    auto turn = [&game]() -> bool {
-        return game.playTurn();
-    };
+  game.init(players);
 
-    return run_app(std::cin, std::cout, init, turn);
+  while (game.playTurn()) {
+    // loop
+  }
+
+  return 0;
 }
