@@ -36,7 +36,10 @@ target_link_libraries(mttt
 add_executable(unit_tests
     tests/test_game.cpp
 )
-target_include_directories(unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+target_include_directories(unit_tests PRIVATE 
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+)
 
 target_link_libraries(unit_tests PRIVATE tictactoe)
 
