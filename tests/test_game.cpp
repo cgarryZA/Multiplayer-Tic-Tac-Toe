@@ -36,7 +36,7 @@ TEST_CASE("Draw scenario for multiple players") {
         }
     }
 
-  
+    // Game returns ' ' (space) when no winner
     CHECK(g.checkWinner() == ' ');
 }
 
