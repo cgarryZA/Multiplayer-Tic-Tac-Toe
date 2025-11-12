@@ -45,16 +45,36 @@ This class manages the board and the players. It handles the moves and checks fo
 - SOMETHING FOR TESTING
 
 ## Installing ##
-- Clone the project and create a build directory inside the project folder
-- Use CMake to compile the project files
-- Run the executable from the terminal with `./mttt`
+- **Clone the project and create a build directory inside the project folder**
+  ```bash
+  git clone <link>
+  cd Multiplayer-Tic-Tac-toe
+  mkdir build
+  cd build
+  ```
+- **Use CMake to compile the project files**
+  ```bash
+  cmake ..
+  cmake --build .
+  ```
+- **Run the executable from the terminal**
+  ```bash
+  ./mttt
+  ```
 - Successful installation will be prompted with the command `'Enter number of players:'`
 
 ## Testing ##
-This project uses the GoogleTest (gtest) framework with test files located in the tests/ directory
+This project uses the `doctest` framework with test files located in the `tests/` directory
+
+**CMake handles testing** — just run:
+ ```bash
+ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+ cmake --build build
+ ctest --test-dir build --output-on-failure
+  ```
 
 ## LICENSE ##
 This project is released under the MIT License. See the LICENSE file for details.
 
 
-ADD BASH COMMANDS AND TESTING DETAILS
+ADD TESTING DETAILS
