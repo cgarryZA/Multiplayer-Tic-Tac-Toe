@@ -33,15 +33,15 @@ target_link_libraries(mttt
 )
 
 # ---- Unit tests (doctest) ----
-add_executable(unit_tests
+add_executable(test_game
     tests/test_game.cpp
 )
-target_include_directories(unit_tests PRIVATE 
+target_include_directories(test_game PRIVATE 
    ${CMAKE_CURRENT_SOURCE_DIR}/include
    ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
 
-target_link_libraries(unit_tests PRIVATE tictactoe)
+target_link_libraries(test_game PRIVATE tictactoe)
 
-add_test(NAME unit COMMAND unit_tests)
+add_test(NAME test_game COMMAND test_game)
 
