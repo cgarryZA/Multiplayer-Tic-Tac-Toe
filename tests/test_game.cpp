@@ -26,19 +26,19 @@ TEST_CASE("Making moves for multiple players") {
 
         SUBCASE("All players can make a valid move on empty board") {
             for (int p = 1; p <= players; ++p) {
-                CHECK(g.makeMove(p, 0, p-1) == true);
+                CHECK(g.placeMove(p, 0, p-1) == true);
             }
         }
 
         SUBCASE("Invalid moves are rejected") {
             for (int p = 1; p <= players; ++p) {
                 // Same cell should be invalid
-                CHECK(g.makeMove(p, 0, p-1) == false);
+                CHECK(g.placeMove(p, 0, p-1) == false);
             }
             // Out-of-bounds moves
             for (int p = 1; p <= players; ++p) {
-                CHECK(g.makeMove(p, -1, 0) == false);
-                CHECK(g.makeMove(p, 0, size) == false);
+                CHECK(g.placeMove(p, -1, 0) == false);
+                CHECK(g.placeMove(p, 0, size) == false);
             }
         }
     }
@@ -52,7 +52,7 @@ TEST_CASE("Draw scenario for multiple players") {
         int current_player = 1;
         for (int r = 0; r < size; ++r) {
             for (int c = 0; c < size; ++c) {
-                g.makeMove(current_player, r, c);
+                g.placeMove(current_player, r, c);
                 current_player = (current_player % players) + 1;
             }
         }
