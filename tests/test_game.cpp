@@ -93,4 +93,13 @@ TEST_CASE("checkWinner detects win on a full board") {
   CHECK(g.checkWinner() == '\0');
 }
 
+TEST_CASE("Init clears previous moves") {
+  Game g;
+  g.init(2);
+  g.placeMove(0,0,'X');
+  g.init(2);
+  CHECK(g.plaveMove(0,0,'O'));
+}
 
+TEST_CASE("init clears previous moves") {
+  Game gl
