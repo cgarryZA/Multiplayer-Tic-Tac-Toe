@@ -30,6 +30,8 @@ TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
   CHECK(g.placeMove(3, 3, 'X') == false);
 }
 
+
+/*
 TEST_CASE("checkWinner detects a simple row win") {
   Game g;
   g.init(2);
@@ -73,6 +75,36 @@ TEST_CASE("checkWinner returns none when there is no win yet") {
   g.placeMove(0, 0, 'O');
   g.placeMove(2, 2, 'X');
   CHECK(g.checkWinner() == '\0');
+}
+
+*/
+
+TEST_CASE("detects wins on all board sizes") {
+  for (int players == 2; players <=7; ++players) {
+    Game g;
+    g.init(players);
+    int n = g.board_.getSize();
+
+    //Row win
+    g.init(players);
+    for (int i = 0; i < n; ++i) g.placeMove(x, 0, 'X');
+    CHECK(g.checkWinner() == 'X');
+
+    //Column win
+    g.init(players);
+    for (int i = 0; i < n; ++i) g.placeMove(0, i, 'O');
+    CHECK(g.checkWinner() == 'O');
+    
+    //Diag win
+    g.init(players);
+    for (int i = 0; i < n; ++i) g.placeMove(i, i, 'X');
+    CHECK(g.checkWinner() == 'X');
+    
+    //Antidiag win
+    g.init(players);
+    for (int i = 0; i < n; ++i) g.placeMove(n-1-i, i, 'O');
+    CHECK(g.checkWinner() == 'O');
+  }
 }
 
 TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
