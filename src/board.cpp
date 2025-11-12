@@ -1,4 +1,5 @@
-// board.cpp
+// src/board.cpp
+
 #include "board.h"
 
 Board::Board(std::size_t size)
