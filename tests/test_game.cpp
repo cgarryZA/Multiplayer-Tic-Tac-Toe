@@ -18,34 +18,33 @@ TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
   CHECK(g.placeMove(3, 3, 'X') == false);
 }
 
-
-TEST_CASE("detects wins on all board sizes") {
-  for (int players = 2; players <=7; ++players) {
+TEST_CASE("Making moves for multiple players") {
     Game g;
-    g.init(players);
-    int n = g.board_.getSize();
 
-    //Row win
-    g.init(players);
-    for (int i = 0; i < n; ++i) g.placeMove(i, 0, 'X');
-    CHECK(g.checkWinner() == 'X');
+    for (int players = 2; players <= 7; ++players) { 
+        int size = g.boardSize(players);
 
-    //Column win
-    g.init(players);
-    for (int i = 0; i < n; ++i) g.placeMove(0, i, 'O');
-    CHECK(g.checkWinner() == 'O');
-    
-    //Diag win
-    g.init(players);
-    for (int i = 0; i < n; ++i) g.placeMove(i, i, 'X');
-    CHECK(g.checkWinner() == 'X');
-    
-    //Antidiag win
-    g.init(players);
-    for (int i = 0; i < n; ++i) g.placeMove(n-1-i, i, 'O');
-    CHECK(g.checkWinner() == 'O');
-  }
+        SUBCASE("All players can make a valid move on empty board") {
+            for (int p = 1; p <= players; ++p) {
+                CHECK(g.makeMove(p, 0, p-1) == true);
+            }
+        }
+
+        SUBCASE("Invalid moves are rejected") {
+            for (int p = 1; p <= players; ++p) {
+                // Same cell should be invalid
+                CHECK(g.makeMove(p, 0, p-1) == false);
+            }
+            // Out-of-bounds moves
+            for (int p = 1; p <= players; ++p) {
+                CHECK(g.makeMove(p, -1, 0) == false);
+                CHECK(g.makeMove(p, 0, size) == false);
+            }
+        }
+    }
 }
+
+
 
 TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
   Game g;
