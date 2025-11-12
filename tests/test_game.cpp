@@ -54,5 +54,43 @@ TEST_CASE("checkWinner detects an antidiagonal win") {
   CHECK(g.checkWinner() == 'O');
 }
 
+TEST_CASE("checkWinner returns none when there is no win yet") {
+  Game g;
+  g.init(2)
+  g.placeMove(0, 0, 'X');
+  g.placeMove(0, 0, 'O');
+  g.placeMove(2, 2, 'X');
+  CHECK(g.checkWinner() == '\0');
+}
+
+TEST_CASE("checkWinner returns none when there is no win yet on a full board") {
+  Game g;
+  g.init(2)
+  g.placeMove(0, 0, 'X');
+  g.placeMove(0, 1, 'O');
+  g.placeMove(0, 2, 'X');
+  g.placeMove(1, 0, 'O');
+  g.placeMove(1, 2, 'O');
+  g.placeMove(2, 0, 'X');
+  g.placeMove(2, 1, 'O');
+  g.placeMove(1, 1, 'X');
+  g.placeMove(2, 2, 'X');
+  CHECK(g.checkWinner() == '\0');
+}
+
+TEST_CASE("checkWinner detects win on a full board") {
+  Game g;
+  g.init(2)
+  g.placeMove(0, 0, 'X');
+  g.placeMove(0, 1, 'O');
+  g.placeMove(0, 2, 'X');
+  g.placeMove(1, 0, 'O');
+  g.placeMove(1, 2, 'O');
+  g.placeMove(2, 0, 'X');
+  g.placeMove(2, 1, 'O');
+  g.placeMove(1, 1, 'X');
+  g.placeMove(2, 2, 'X');
+  CHECK(g.checkWinner() == '\0');
+}
 
 
