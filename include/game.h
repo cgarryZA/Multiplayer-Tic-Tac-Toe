@@ -24,7 +24,13 @@ public:
 
     bool playTurn();
 
+    const std::vector<char>& players() const { return players_; }
+
 private:
+    std::unordered_map<char, std::size_t> playerToTeam_;
+
+    int teamIndexOf(char c) const;
+
     static bool isBadBoardChar(char ch);
 
     static std::vector<char> generateRandomSymbols(int count);
