@@ -1,4 +1,5 @@
-// game.hpp
+// include/game.h
+
 #pragma once
 #include "board.h"
 #include <vector>

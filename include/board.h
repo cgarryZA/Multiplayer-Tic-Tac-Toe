@@ -1,4 +1,5 @@
-// board.hpp
+// include/board.h
+
 #pragma once
 #include <cstddef>
 #include <iostream>
