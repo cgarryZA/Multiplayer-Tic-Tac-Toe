@@ -3,6 +3,8 @@
 #include <sstream>
 #include <unordered_set>
 #include <cctype>
+#include <algorithm>  // for std::all_of
+#include <limits>
 
 static std::vector<std::vector<char> >
 parseTeamsLine(const std::string &line, const std::vector<char> &roster) {
