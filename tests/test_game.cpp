@@ -4,12 +4,21 @@
 #include "game.h"
 // #include "board.h" // include later
 
+//TEST_CASE("boardSize grows with number of players") {
+  //CHECK(Game::boardSize(2) == 3);
+  //CHECK(Game::boardSize(3) == 4);
+  //CHECK(Game::boardSize(4) == 5);
+  //CHECK(Game::boardSize(5) == 6);
+  //CHECK(Game::boardSize(6) == 7);
+//}
+
 TEST_CASE("boardSize grows with number of players") {
-  CHECK(Game::boardSize(2) == 3);
-  CHECK(Game::boardSize(3) == 4);
-  CHECK(Game::boardSize(4) == 5);
-  CHECK(Game::boardSize(5) == 6);
-  CHECK(Game::boardSize(6) == 7);
+  for (int players = 2; players <=7; ++players) {
+    Game g;
+    g.init(players);
+    std::size_t size = g.checkWinner();
+    CHECK(g.boardSize(players) == g.board_.getSize());
+    CHECK(g.board_.getSize() == players + 1);
 }
 
 TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
