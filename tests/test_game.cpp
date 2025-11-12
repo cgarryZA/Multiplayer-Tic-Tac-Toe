@@ -2,10 +2,6 @@
 #include "third_party/doctest.h"
 #include "game.h"
 
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "third_party/doctest.h"
-#include "game.h"
-
 TEST_CASE("Making moves for multiple players") {
     Game g;
     g.init(5); 
