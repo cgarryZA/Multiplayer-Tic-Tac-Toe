@@ -40,6 +40,7 @@ if (BUILD_TESTS)
         tests/test_app.cpp
         tests/test_app_header.cpp
         tests/test_teams.cpp
+        tests/test_board.cpp
     )
     target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tests
