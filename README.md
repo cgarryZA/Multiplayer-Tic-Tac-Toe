@@ -1,7 +1,7 @@
 # Multiplayer-Tic-Tac-Toe
 Multiplayer tic tac toe game with build tools and CI implementations
 
-## Group Members ##
+## Contributors ##
 1. Louis Bedford
 2. Christian Garry
 3. Ailis McConachie-Smith
@@ -46,7 +46,7 @@ This class manages the board and the players. It handles the moves and checks fo
 ## Installing ##
 - **Clone the project and create a build directory inside the project folder**
   ```bash
-  git clone <link>
+  git clone https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe
   cd Multiplayer-Tic-Tac-toe
   mkdir build
   cd build
