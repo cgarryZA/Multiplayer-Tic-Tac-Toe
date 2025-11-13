@@ -94,8 +94,7 @@ This class manages the board and the players. It handles the moves and checks fo
 - **Clone the project and create a build directory inside the project folder**
   ```bash
   git clone https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe.git
-  cd Multiplayer-Tic-Tac-toe
-  cd scripts
+  cd Multiplayer-Tic-Tac-toe\scripts
   ```
 - **Debug version with tests**
   ```bash
