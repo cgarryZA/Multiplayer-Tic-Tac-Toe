@@ -107,6 +107,7 @@ This class manages the board and the players. It handles the moves and checks fo
   ```
 - **Run**
   ```bash
+  cd scripts
   .\run.bat
   ```
 - Successful installation will be prompted with the command `'Enter number of players:'`
