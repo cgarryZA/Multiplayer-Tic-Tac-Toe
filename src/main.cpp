@@ -47,7 +47,7 @@ parseTeamsLine(const std::string &line, const std::vector<char> &roster) {
 
   // Validate coverage & duplicates: each roster member must appear exactly once
   std::unordered_set<char> seen;
-  for (auto &t : teams)
+  for (const auto &t : teams)
     for (char c : t) {
       if (!rosterSet.count(c))
         throw std::runtime_error("Unknown player in team");
