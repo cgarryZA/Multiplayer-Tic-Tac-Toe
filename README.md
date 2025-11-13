@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe/actions/workflows/ci.yml/badge.svg)](https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/cgarryZA/Multiplayer-Tic-Tac-Toe/branch/main/graph/badge.svg)](https://codecov.io/gh/cgarryZA/Multiplayer-Tic-Tac-Toe)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Multiplayer tic tac toe game with build tools and CI implementations
 
@@ -47,6 +48,13 @@ Player A move (x y): 2 0
 - Players take it in turns to place their symbol in a square on the grid - a move has the form (x, y)
 - A WIN is achieved when a players fills a row, column, or diagonal with their symbol
 - If the board is filled before a win is achieved then the result is a DRAW
+
+### Team Mode (Optional)
+- Players may be grouped into teams before the game starts
+- Teams act as “super-players”: any member of a team placing a piece contributes toward that team’s win condition 
+- Turn order cycles by team rather than by player
+- Teams with fewer members automatically receive repeated turns so that each team gets an equal-sized “chunk” of moves
+- A team wins when all symbols placed by that team form a complete row, column, or diagonal
 
 ## Project Structure
 ```text

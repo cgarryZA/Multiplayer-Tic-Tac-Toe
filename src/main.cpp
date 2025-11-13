@@ -1,5 +1,5 @@
 #include "game.h"
-#include <algorithm> // for std::all_of
+#include <algorithm>
 #include <cctype>
 #include <iostream>
 #include <limits>
@@ -14,7 +14,6 @@ parseTeamsLine(const std::string &line, const std::vector<char> &roster) {
     return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
   };
 
-  // Split by '|'
   std::vector<std::vector<char>> teams;
   std::istringstream top(line);
   std::string teamChunk;
@@ -45,7 +44,6 @@ parseTeamsLine(const std::string &line, const std::vector<char> &roster) {
   if (teams.empty())
     throw std::runtime_error("No teams parsed");
 
-  // Validate coverage & duplicates: each roster member must appear exactly once
   std::unordered_set<char> seen;
   for (const auto &t : teams)
     for (char c : t) {
@@ -75,7 +73,6 @@ int main() {
 
   game.init(players);
 
-  // Show roster so users know symbols
   const auto &roster = game.players();
   std::cout << "Players: ";
   for (std::size_t i = 0; i < roster.size(); ++i) {
