@@ -16,6 +16,14 @@ This is a multiplayer tic-tac-toe game played with N players on an (N+1) X (N+1)
 Each player is represented by their own symbol (e.g. 'X', 'O' etc)
 Each player takes a turn placing a symbol on the board until the board is full or the game is won (rules are described below)
 
+## Features
+- Multiplayer N-player mode
+- Dynamic board scaling (N+1 x N+1)
+- Supports teams mode (optional)
+- Move validation and win detection
+- Fully unit tested (100% coverage)
+- GitHub Actions CI + Codecov integration
+
 ## Game Format ##
 ```text
  2   X | O | 
@@ -25,7 +33,13 @@ Each player takes a turn placing a symbol on the board until the board is full o
  0     |   |  
      0   1   2
 ```
-move looks like (x, y)
+
+## Example Game Session
+Enter number of players: 3
+Player X move (x y): 0 0
+Player O move (x y): 1 0
+Player A move (x y): 2 0
+...
 
 ## Rules ##
 - The game is initialised with N players and a symbol is generated for each player
@@ -33,6 +47,15 @@ move looks like (x, y)
 - Players take it in turns to place their symbol in a square on the grid - a move has the form (x, y)
 - A WIN is achieved when a players fills a row, column, or diagonal with their symbol
 - If the board is filled before a win is achieved then the result is a DRAW
+
+## Project Structure
+Multiplayer-Tic-Tac-Toe/
+├── src/         # Game implementation
+├── include/     # Public headers
+├── tests/       # Unit tests (doctest)
+├── scripts/     # Build & tooling scripts
+├── CMakeLists.txt
+└── README.md
 
 
 ## Classes ##
@@ -50,7 +73,7 @@ This class manages the board and the players. It handles the moves and checks fo
 ## General Installation Instructions ##
 - **Clone the project and create a build directory inside the project folder**
   ```bash
-  git clone <link>
+  git clone https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe.git
   cd Multiplayer-Tic-Tac-toe
   mkdir build
   cd build
@@ -69,7 +92,7 @@ This class manages the board and the players. It handles the moves and checks fo
 ## Windows Installation ##
 - **Clone the project and create a build directory inside the project folder**
   ```bash
-  git clone <link>
+  git clone https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe.git
   cd Multiplayer-Tic-Tac-toe
   cd scripts
   ```
