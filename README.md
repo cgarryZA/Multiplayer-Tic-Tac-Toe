@@ -5,7 +5,7 @@
 
 Multiplayer tic tac toe game with build tools and CI implementations
 
-## Group Members ##
+## Contributors ##
 1. Louis Bedford
 2. Christian Garry
 3. Ailis McConachie-Smith
@@ -47,7 +47,7 @@ This class manages the board and the players. It handles the moves and checks fo
 - C++17 compiler
 - Git (to clone the repository)
 
-## Installing ##
+## General Installation Instructions ##
 - **Clone the project and create a build directory inside the project folder**
   ```bash
   git clone <link>
@@ -63,6 +63,28 @@ This class manages the board and the players. It handles the moves and checks fo
 - **Run the executable from the terminal**
   ```bash
   ./mttt
+  ```
+- Successful installation will be prompted with the command `'Enter number of players:'`
+
+## Windows Installation ##
+- **Clone the project and create a build directory inside the project folder**
+  ```bash
+  git clone <link>
+  cd Multiplayer-Tic-Tac-toe
+  cd scripts
+  ```
+- **Debug version with tests
+  ```bash
+  .\build.bat
+  .\coverage.bat  #generate coverage html for tests
+  ```
+- **Release version
+  ```bash
+  .\build_release.bat
+  ```
+- **Run
+  ```bash
+  .\run.bat
   ```
 - Successful installation will be prompted with the command `'Enter number of players:'`
 
