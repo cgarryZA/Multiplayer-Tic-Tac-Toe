@@ -33,13 +33,13 @@ Each player takes a turn placing a symbol on the board until the board is full o
  0     |   |  
      0   1   2
 ```
-
+```text
 ## Example Game Session
 Enter number of players: 3
 Player X move (x y): 0 0
 Player O move (x y): 1 0
 Player A move (x y): 2 0
-...
+```
 
 ## Rules ##
 - The game is initialised with N players and a symbol is generated for each player
@@ -49,6 +49,7 @@ Player A move (x y): 2 0
 - If the board is filled before a win is achieved then the result is a DRAW
 
 ## Project Structure
+```text
 Multiplayer-Tic-Tac-Toe/
 ├── src/         # Game implementation
 ├── include/     # Public headers
@@ -56,7 +57,7 @@ Multiplayer-Tic-Tac-Toe/
 ├── scripts/     # Build & tooling scripts
 ├── CMakeLists.txt
 └── README.md
-
+```
 
 ## Classes ##
 board:
