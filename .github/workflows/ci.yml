@@ -79,7 +79,6 @@ jobs:
         run: |
           cppcheck --version
           cppcheck \
-            --force \
             --enable=warning,style,performance,portability \
             --error-exitcode=1 \
             --inline-suppr \
