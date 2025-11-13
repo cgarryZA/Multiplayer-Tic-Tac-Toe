@@ -79,7 +79,6 @@ jobs:
         run: |
           cppcheck --version
           cppcheck \
-            --force \
             --enable=warning,style,performance,portability \
             --error-exitcode=1 \
             --inline-suppr \
@@ -87,3 +86,65 @@ jobs:
             --suppressions-list=cppcheck.suppress \
             -I include \
             src tests
+    
+  coverage-macos:
+    name: Coverage (macOS / llvm-cov)
+    runs-on: macos-latest
+    needs: build-and-test   # wait for the regular tests to pass first
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (coverage)
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DENABLE_COVERAGE=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests with coverage
+        shell: bash
+        run: |
+          # each test process writes its own profile into build/
+          export LLVM_PROFILE_FILE="$PWD/build/coverage-%p.profraw"
+          ctest --test-dir build --output-on-failure
+
+      - name: Merge profiles -> coverage.profdata
+        run: |
+          xcrun llvm-profdata merge -sparse build/coverage-*.profraw \
+            -o build/coverage.profdata
+
+      - name: Show coverage (src + include only)
+        run: |
+          # Limit report to src/ and include/ files
+          xcrun llvm-cov report \
+            build/unit_tests \
+            -instr-profile=build/coverage.profdata \
+            src include
+
+      - name: Export LCOV (src + include only)
+        run: |
+          xcrun llvm-cov export \
+            build/unit_tests \
+            -instr-profile=build/coverage.profdata \
+            -format=lcov \
+            src include \
+            > build/coverage-macos.lcov
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-coverage
+          path: |
+            build/coverage.profdata
+            build/coverage-macos.lcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage-macos.lcov
+          flags: macos
+          fail_ci_if_error: false

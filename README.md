@@ -1,4 +1,8 @@
 # Multiplayer-Tic-Tac-Toe
+
+[![CI](https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe/actions/workflows/ci.yml/badge.svg)](https://github.com/cgarryZA/Multiplayer-Tic-Tac-Toe/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/cgarryZA/Multiplayer-Tic-Tac-Toe/branch/main/graph/badge.svg)](https://codecov.io/gh/cgarryZA/Multiplayer-Tic-Tac-Toe)
+
 Multiplayer tic tac toe game with build tools and CI implementations
 
 ## Group Members ##

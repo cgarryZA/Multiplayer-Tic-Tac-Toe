@@ -1,5 +1,8 @@
 #include "game.h"
 #include "third_party/doctest.h"
+#ifndef ANALYZER_USE
+#define ANALYZER_USE(x) (void)(x)
+#endif
 
 static std::vector<char> pull(Game &g, int n) {
   std::vector<char> out;
@@ -16,6 +19,8 @@ TEST_CASE("teams: 2 vs 1 -> chunks of size 2 for each team; solo repeats") {
 
   auto seq = pull(g, 6);
   std::vector<char> want = {'A', 'B', 'C', 'C', 'A', 'B'};
+  ANALYZER_USE(seq);
+  ANALYZER_USE(want);
   CHECK(seq == want);
 }
 
@@ -27,6 +32,8 @@ TEST_CASE("teams: 3,2,2 -> chunks of size 3; 2-member team repeats last") {
 
   auto seq = pull(g, 9);
   std::vector<char> want = {'D', 'E', 'F', 'G', 'H', 'G', 'I', 'J', 'I'};
+  ANALYZER_USE(seq);
+  ANALYZER_USE(want);
   CHECK(seq == want);
 }
 

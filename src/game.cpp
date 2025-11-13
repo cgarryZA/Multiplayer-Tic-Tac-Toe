@@ -206,7 +206,7 @@ void Game::initWithPlayers(const std::vector<char> &players) {
 
 void Game::enableTeams(const std::vector<std::vector<char>> &teams) {
   std::vector<char> flat;
-  for (auto &t : teams)
+  for (const auto &t : teams)
     flat.insert(flat.end(), t.begin(), t.end());
 
   auto has = [&](char c) {
@@ -219,7 +219,7 @@ void Game::enableTeams(const std::vector<std::vector<char>> &teams) {
   std::size_t mx = 1;
   teams_.clear();
   teams_.reserve(teams.size());
-  for (auto &t : teams) {
+  for (const auto &t : teams) {
     Team T;
     T.members = t;
     T.memberIndex = 0;
