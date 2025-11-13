@@ -73,16 +73,16 @@ This class manages the board and the players. It handles the moves and checks fo
   cd Multiplayer-Tic-Tac-toe
   cd scripts
   ```
-- **Debug version with tests
+- **Debug version with tests**
   ```bash
   .\build.bat
   .\coverage.bat  #generate coverage html for tests
   ```
-- **Release version
+- **Release version**
   ```bash
   .\build_release.bat
   ```
-- **Run
+- **Run**
   ```bash
   .\run.bat
   ```
