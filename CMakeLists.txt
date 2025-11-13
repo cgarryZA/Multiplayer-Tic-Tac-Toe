@@ -43,6 +43,7 @@ if (BUILD_TESTS)
         tests/test_game.cpp
         tests/test_app.cpp
         tests/test_teams.cpp
+
         
         tests/test_app_header.cpp
         tests/test_board_header.cpp
