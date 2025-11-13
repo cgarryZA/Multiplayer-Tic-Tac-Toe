@@ -27,7 +27,7 @@ Board::Board(std::size_t size)
   cells_[y][x] = value;
 }</span>
 
-<span style = "background-color:#fdd">void Board::print() const {
+<span style = "background-color:#dfd">void Board::print() const {
   for (int y = static_cast&lt;int&gt;(size_) - 1; y &gt;= 0; --y) {
     std::cout &lt;&lt; " " &lt;&lt; y &lt;&lt; "   ";
     for (std::size_t x = 0; x &lt; size_; ++x) {
@@ -37,7 +37,7 @@ Board::Board(std::size_t size)
     }
     std::cout &lt;&lt; "\n";</span>
 
-<span style = "background-color:#fdd">    if (y &gt; 0) {
+<span style = "background-color:#dfd">    if (y &gt; 0) {
       std::cout &lt;&lt; "    ";
       for (std::size_t x = 0; x &lt; size_; ++x) {
         std::cout &lt;&lt; "---";
@@ -46,15 +46,15 @@ Board::Board(std::size_t size)
       }
       std::cout &lt;&lt; "\n";</span>
     }
-<span style = "background-color:#fdd">  }</span>
+<span style = "background-color:#dfd">  }</span>
 
-<span style = "background-color:#fdd">  std::cout &lt;&lt; "      ";
+<span style = "background-color:#dfd">  std::cout &lt;&lt; "      ";
   for (std::size_t x = 0; x &lt; size_; ++x)
     std::cout &lt;&lt; x &lt;&lt; "   ";
   std::cout &lt;&lt; "\n";
 }</span>
 
-<span style = "background-color:#fdd">bool Board::isFull() const {
+<span style = "background-color:#dfd">bool Board::isFull() const {
   for (std::size_t y = 0; y &lt; size_; ++y)
     for (std::size_t x = 0; x &lt; size_; ++x)
       if (get(x, y) == ' ')

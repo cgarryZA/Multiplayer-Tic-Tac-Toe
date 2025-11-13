@@ -86,9 +86,9 @@ std::vector&lt;char&gt;
 }</span>
 
 <span style = "background-color:#dfd">bool Game::placeMove(int x, int y, char player) {
-  if (x &lt; 0 || y &lt; 0)</span>
-<span style = "background-color:#fdd">    return false;</span>
-<span style = "background-color:#dfd">  if (x &gt;= (int)board_.getSize() || y &gt;= (int)board_.getSize())
+  if (x &lt; 0 || y &lt; 0)
+    return false;
+  if (x &gt;= (int)board_.getSize() || y &gt;= (int)board_.getSize())
     return false;
   if (board_.get(x, y) != ' ')
     return false;
@@ -142,9 +142,9 @@ std::vector&lt;char&gt;
           allSame = false;
           break;</span>
         }
-<span style = "background-color:#fdd">      }</span>
-<span style = "background-color:#dfd">      if (allSame)</span>
-<span style = "background-color:#fdd">        return c0;</span>
+<span style = "background-color:#dfd">      }
+      if (allSame)
+        return c0;</span>
     }
   }
 
@@ -166,24 +166,24 @@ std::vector&lt;char&gt;
 <span style = "background-color:#dfd">  return ' ';
 }</span>
 
-<span style = "background-color:#fdd">bool Game::playTurn() {
+<span style = "background-color:#dfd">bool Game::playTurn() {
   board_.print();</span>
 
-<span style = "background-color:#fdd">  char current = nextScheduledPlayer();
+<span style = "background-color:#dfd">  char current = nextScheduledPlayer();
   std::cout &lt;&lt; "Player " &lt;&lt; current &lt;&lt; " move (x y): ";</span>
 
   int x, y;
-<span style = "background-color:#fdd">  if (!(std::cin &gt;&gt; x &gt;&gt; y)) {
+<span style = "background-color:#dfd">  if (!(std::cin &gt;&gt; x &gt;&gt; y)) {
     std::cout &lt;&lt; "Input ended.\n";
     return false;</span>
   }
 
-<span style = "background-color:#fdd">  if (!placeMove(x, y, current)) {
+<span style = "background-color:#dfd">  if (!placeMove(x, y, current)) {
     std::cout &lt;&lt; "Invalid move, try again.\n";
     return true;</span>
   }
 
-<span style = "background-color:#fdd">  char winner = checkWinner();
+<span style = "background-color:#dfd">  char winner = checkWinner();
   if (winner != ' ') {
     board_.print();
     if (teamsMode_) {
@@ -192,16 +192,16 @@ std::vector&lt;char&gt;
     } else {
       std::cout &lt;&lt; "Player " &lt;&lt; winner &lt;&lt; " wins!\n";</span>
     }
-<span style = "background-color:#fdd">    return false;</span>
+<span style = "background-color:#dfd">    return false;</span>
   }
 
-<span style = "background-color:#fdd">  if (board_.isFull()) {
+<span style = "background-color:#dfd">  if (board_.isFull()) {
     board_.print();
     std::cout &lt;&lt; "It's a draw.\n";
     return false;</span>
   }
 
-<span style = "background-color:#fdd">  return true;
+<span style = "background-color:#dfd">  return true;
 }</span>
 
 <span style = "background-color:#dfd">void Game::initWithPlayers(const std::vector&lt;char&gt; &amp;players) {
@@ -251,8 +251,8 @@ std::vector&lt;char&gt;
 }</span>
 
 <span style = "background-color:#dfd">char Game::nextScheduledPlayer() {
-  if (!teamsMode_) {</span>
-<span style = "background-color:#fdd">    char p = players_[currentPlayer_];
+  if (!teamsMode_) {
+    char p = players_[currentPlayer_];
     currentPlayer_ = (currentPlayer_ + 1) % players_.size();
     return p;</span>
   }
@@ -271,12 +271,12 @@ std::vector&lt;char&gt;
   if (c == ' ')
     return -1;
   if (!teamsMode_)
-    return static_cast&lt;int&gt;(c);</span>
-<span style = "background-color:#fdd">  auto it = playerToTeam_.find(c);
+    return static_cast&lt;int&gt;(c);
+  auto it = playerToTeam_.find(c);
   if (it == playerToTeam_.end())
     return static_cast&lt;int&gt;(c);
-  return static_cast&lt;int&gt;(it-&gt;second);</span>
-<span style = "background-color:#dfd">}</span></pre>
+  return static_cast&lt;int&gt;(it-&gt;second);
+}</span></pre>
         <hr />
         <table width="100%">
             <thead>

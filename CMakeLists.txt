@@ -50,7 +50,24 @@ if (BUILD_TESTS)
     add_test(NAME unit_app_only COMMAND unit_tests --test-case "app:*")
 endif()
 
-# Format check target
+# Files to run clang-format on
+set(ALL_CODE
+    src/app.cpp
+    src/board.cpp
+    src/game.cpp
+    src/main.cpp
+
+    include/app.h
+    include/board.h
+    include/codes.h
+    include/game.h
+
+    tests/test_app.cpp
+    tests/test_app_header.cpp
+    tests/test_game.cpp
+    tests/test_teams.cpp
+)
+
 find_program(CLANG_FORMAT_EXE NAMES clang-format)
 if (CLANG_FORMAT_EXE)
   add_custom_target(format-check
