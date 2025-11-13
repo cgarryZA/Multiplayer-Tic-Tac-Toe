@@ -7,7 +7,6 @@
 #define ANALYZER_USE(x) (void)(x)
 #endif
 
-
 TEST_CASE("app: empty input -> error code EOF") {
   std::istringstream in("");
   std::ostringstream out;
