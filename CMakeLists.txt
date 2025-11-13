@@ -38,8 +38,12 @@ if (BUILD_TESTS)
     add_executable(unit_tests
         tests/test_game.cpp
         tests/test_app.cpp
-        tests/test_app_header.cpp
         tests/test_teams.cpp
+        
+        tests/test_app_header.cpp
+        tests/test_board_header.cpp
+        tests/test_codes_header.cpp
+        tests/test_game_header.cpp
     )
     target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tests
@@ -63,9 +67,13 @@ set(ALL_CODE
     include/game.h
 
     tests/test_app.cpp
-    tests/test_app_header.cpp
     tests/test_game.cpp
     tests/test_teams.cpp
+    
+    tests/test_app_header.cpp
+    tests/test_board_header.cpp
+    tests/test_codes_header.cpp
+    tests/test_game_header.cpp
 )
 
 find_program(CLANG_FORMAT_EXE NAMES clang-format)
