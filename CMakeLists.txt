@@ -39,6 +39,7 @@ if (BUILD_TESTS)
         tests/test_game.cpp
         tests/test_app.cpp
         tests/test_teams.cpp
+        
         tests/test_app_header.cpp
         tests/test_board_header.cpp
         tests/test_codes_header.cpp
@@ -66,9 +67,13 @@ set(ALL_CODE
     include/game.h
 
     tests/test_app.cpp
-    tests/test_app_header.cpp
     tests/test_game.cpp
     tests/test_teams.cpp
+    
+    tests/test_app_header.cpp
+    tests/test_board_header.cpp
+    tests/test_codes_header.cpp
+    tests/test_game_header.cpp
 )
 
 find_program(CLANG_FORMAT_EXE NAMES clang-format)
