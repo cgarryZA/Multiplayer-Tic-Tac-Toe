@@ -12,165 +12,271 @@
 // src/game.cpp
 
 #include "game.h"
+#include &lt;algorithm&gt;
 #include &lt;iostream&gt;
 #include &lt;random&gt;
-#include &lt;algorithm&gt;
 
 constexpr int MIN_PLAYERS = 2;
 
 <span style = "background-color:#dfd">Game::Game() : board_(3) {}</span>
 
-void Game::init(int playerCount)
-<span style = "background-color:#dfd">{
-    if (playerCount &lt; MIN_PLAYERS)</span>
-<span style = "background-color:#fdd">        playerCount = MIN_PLAYERS;</span>
+<span style = "background-color:#dfd">void Game::init(int playerCount) {
+  if (playerCount &lt; MIN_PLAYERS)
+    playerCount = MIN_PLAYERS;</span>
 
-<span style = "background-color:#dfd">    players_ = generateRandomSymbols(playerCount);
-    currentPlayer_ = 0;</span>
+<span style = "background-color:#dfd">  players_ = generateRandomSymbols(playerCount);
+  currentPlayer_ = 0;</span>
 
-<span style = "background-color:#dfd">    board_.resize(boardSize(players_.size()));
+<span style = "background-color:#dfd">  board_.resize(boardSize(players_.size()));
 }</span>
 
-std::size_t Game::boardSize(std::size_t numPlayers)
-<span style = "background-color:#dfd">{
-    return numPlayers + 1;
+<span style = "background-color:#dfd">std::size_t Game::boardSize(std::size_t numPlayers) { return numPlayers + 1; }</span>
+
+<span style = "background-color:#dfd">bool Game::isBadBoardChar(char ch) {
+  return ch == '|' || ch == '+' || ch == ' ' || ch == '-';
 }</span>
 
-bool Game::isBadBoardChar(char ch)
-<span style = "background-color:#fdd">{
-    return ch == '|' || ch == '+' || ch == ' ' || ch == '-';
+<span style = "background-color:#dfd">std::vector&lt;char&gt; Game::generateRandomSymbols(int count) {
+  return generateRandomSymbols(count, {});
 }</span>
 
-std::vector&lt;char&gt; Game::generateRandomSymbols(int count)
-<span style = "background-color:#dfd">{
-    std::vector&lt;char&gt; result;
-    result.reserve(count);</span>
+std::vector&lt;char&gt;
+<span style = "background-color:#dfd">Game::generateRandomSymbols(int count, const std::vector&lt;char&gt; &amp;extraPool) {
+  std::vector&lt;char&gt; result;
+  result.reserve(count);</span>
 
-<span style = "background-color:#dfd">    if (count &gt;= 1) result.push_back('X');
-    if (count &gt;= 2) result.push_back('O');
+<span style = "background-color:#dfd">  if (count &gt;= 1)
+    result.push_back('X');
+  if (count &gt;= 2)
+    result.push_back('O');
+  if ((int)result.size() &gt;= count)
+    return result;</span>
+
+<span style = "background-color:#dfd">  std::vector&lt;char&gt; pool;</span>
+
+  auto push_if_ok = [&amp;](char ch) {
+<span style = "background-color:#dfd">    if (isBadBoardChar(ch))
+      return;
+    if (ch == 'X' || ch == 'O')
+      return;
+    if (std::isalpha(static_cast&lt;unsigned char&gt;(ch))) {
+      pool.push_back(ch);</span>
+    }
+<span style = "background-color:#dfd">  };</span>
+
+<span style = "background-color:#dfd">  for (char ch : extraPool)
+    push_if_ok(ch);</span>
+
+<span style = "background-color:#dfd">  for (char ch = 'A'; ch &lt;= 'Z'; ++ch)
+    push_if_ok(ch);
+  for (char ch = 'a'; ch &lt;= 'z'; ++ch)
+    push_if_ok(ch);</span>
+
+  static std::random_device rd;
+<span style = "background-color:#dfd">  static std::mt19937 gen(rd());
+  std::shuffle(pool.begin(), pool.end(), gen);</span>
+
+<span style = "background-color:#dfd">  for (char ch : pool) {
     if ((int)result.size() &gt;= count)
-        return result;</span>
+      break;
+    result.push_back(ch);
+  }</span>
 
-<span style = "background-color:#fdd">    std::vector&lt;char&gt; pool;
-    for (int c = 33; c &lt;= 126; ++c)</span>
-    {
-<span style = "background-color:#fdd">        char ch = static_cast&lt;char&gt;(c);
-        if (isBadBoardChar(ch)) continue;
-        if (ch == 'X' || ch == 'O') continue;
-        pool.push_back(ch);
-    }</span>
-
-    static std::random_device rd;
-<span style = "background-color:#fdd">    static std::mt19937 gen(rd());
-    std::shuffle(pool.begin(), pool.end(), gen);</span>
-
-<span style = "background-color:#fdd">    for (char ch : pool)</span>
-    {
-<span style = "background-color:#fdd">        if ((int)result.size() &gt;= count) break;
-        result.push_back(ch);
-    }</span>
-
-<span style = "background-color:#fdd">    return result;</span>
-<span style = "background-color:#dfd">}</span>
-
-bool Game::placeMove(int x, int y, char player)
-<span style = "background-color:#dfd">{
-    if (x &lt; 0 || y &lt; 0) return false;
-    if (x &gt;= (int)board_.getSize() || y &gt;= (int)board_.getSize()) return false;
-    if (board_.get(x, y) != ' ') return false;
-    board_.set(x, y, player);
-    return true;
+<span style = "background-color:#dfd">  return result;
 }</span>
 
-char Game::checkWinner() const
-<span style = "background-color:#dfd">{
-    std::size_t size = board_.getSize();</span>
+<span style = "background-color:#dfd">bool Game::placeMove(int x, int y, char player) {
+  if (x &lt; 0 || y &lt; 0)</span>
+<span style = "background-color:#fdd">    return false;</span>
+<span style = "background-color:#dfd">  if (x &gt;= (int)board_.getSize() || y &gt;= (int)board_.getSize())
+    return false;
+  if (board_.get(x, y) != ' ')
+    return false;
+  board_.set(x, y, player);
+  return true;
+}</span>
 
-    // rows
-<span style = "background-color:#dfd">    for (std::size_t y = 0; y &lt; size; ++y)</span>
-    {
-<span style = "background-color:#dfd">        char first = board_.get(0, y);
-        if (first == ' ') continue;
-        bool allSame = true;
-        for (std::size_t x = 1; x &lt; size; ++x)
-            if (board_.get(x, y) != first) { allSame = false; break; }
-        if (allSame) return first;</span>
-<span style = "background-color:#fdd">    }</span>
+<span style = "background-color:#dfd">char Game::checkWinner() const {
+  std::size_t size = board_.getSize();</span>
 
-    // cols
-<span style = "background-color:#fdd">    for (std::size_t x = 0; x &lt; size; ++x)</span>
-    {
-<span style = "background-color:#fdd">        char first = board_.get(x, 0);
-        if (first == ' ') continue;
-        bool allSame = true;
-        for (std::size_t y = 1; y &lt; size; ++y)
-            if (board_.get(x, y) != first) { allSame = false; break; }
-        if (allSame) return first;
-    }</span>
+  // rows
+<span style = "background-color:#dfd">  for (std::size_t y = 0; y &lt; size; ++y) {
+    char c0 = board_.get(0, y);
+    int t0 = teamIndexOf(c0);
+    if (t0 == -1)
+      continue;
+    bool allSame = true;
+    for (std::size_t x = 1; x &lt; size; ++x) {
+      if (teamIndexOf(board_.get(x, y)) != t0) {
+        allSame = false;
+        break;</span>
+      }
+<span style = "background-color:#dfd">    }
+    if (allSame)
+      return c0;
+  }</span>
 
-    // main diag
-    {
-<span style = "background-color:#fdd">        char first = board_.get(0, 0);
-        if (first != ' ') {
-            bool allSame = true;
-            for (std::size_t i = 1; i &lt; size; ++i)
-                if (board_.get(i, i) != first) { allSame = false; break; }
-            if (allSame) return first;</span>
+<span style = "background-color:#dfd">  for (std::size_t x = 0; x &lt; size; ++x) {
+    char c0 = board_.get(x, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 == -1)
+      continue;
+    bool allSame = true;
+    for (std::size_t y = 1; y &lt; size; ++y) {
+      if (teamIndexOf(board_.get(x, y)) != t0) {
+        allSame = false;
+        break;</span>
+      }
+<span style = "background-color:#dfd">    }
+    if (allSame)
+      return c0;
+  }</span>
+
+  {
+<span style = "background-color:#dfd">    char c0 = board_.get(0, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 != -1) {
+      bool allSame = true;
+      for (std::size_t i = 1; i &lt; size; ++i) {
+        if (teamIndexOf(board_.get(i, i)) != t0) {
+          allSame = false;
+          break;</span>
         }
+<span style = "background-color:#fdd">      }</span>
+<span style = "background-color:#dfd">      if (allSame)</span>
+<span style = "background-color:#fdd">        return c0;</span>
     }
+  }
 
-    // anti diag
-    {
-<span style = "background-color:#fdd">        char first = board_.get(size - 1, 0);
-        if (first != ' ') {
-            bool allSame = true;
-            for (std::size_t i = 1; i &lt; size; ++i)
-                if (board_.get(size - 1 - i, i) != first) { allSame = false; break; }
-            if (allSame) return first;</span>
+  {
+<span style = "background-color:#dfd">    char c0 = board_.get(size - 1, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 != -1) {
+      bool allSame = true;
+      for (std::size_t i = 1; i &lt; size; ++i) {
+        if (teamIndexOf(board_.get(size - 1 - i, i)) != t0) {
+          allSame = false;
+          break;</span>
         }
+<span style = "background-color:#dfd">      }
+      if (allSame)
+        return c0;</span>
     }
+  }
+<span style = "background-color:#dfd">  return ' ';
+}</span>
 
-<span style = "background-color:#fdd">    return ' ';</span>
-<span style = "background-color:#dfd">}</span>
+<span style = "background-color:#fdd">bool Game::playTurn() {
+  board_.print();</span>
 
-bool Game::playTurn()
-<span style = "background-color:#fdd">{
-    board_.print();</span>
+<span style = "background-color:#fdd">  char current = nextScheduledPlayer();
+  std::cout &lt;&lt; "Player " &lt;&lt; current &lt;&lt; " move (x y): ";</span>
 
-<span style = "background-color:#fdd">    char current = players_[currentPlayer_];
-    std::cout &lt;&lt; "Player " &lt;&lt; current &lt;&lt; " move (x y): ";</span>
+  int x, y;
+<span style = "background-color:#fdd">  if (!(std::cin &gt;&gt; x &gt;&gt; y)) {
+    std::cout &lt;&lt; "Input ended.\n";
+    return false;</span>
+  }
 
-    int x, y;
-<span style = "background-color:#fdd">    if (!(std::cin &gt;&gt; x &gt;&gt; y))</span>
-    {
-<span style = "background-color:#fdd">        std::cout &lt;&lt; "Input ended.\n";
-        return false;</span>
+<span style = "background-color:#fdd">  if (!placeMove(x, y, current)) {
+    std::cout &lt;&lt; "Invalid move, try again.\n";
+    return true;</span>
+  }
+
+<span style = "background-color:#fdd">  char winner = checkWinner();
+  if (winner != ' ') {
+    board_.print();
+    if (teamsMode_) {
+      int tid = teamIndexOf(winner);
+      std::cout &lt;&lt; "Team " &lt;&lt; tid &lt;&lt; " wins \n";
+    } else {
+      std::cout &lt;&lt; "Player " &lt;&lt; winner &lt;&lt; " wins!\n";</span>
     }
+<span style = "background-color:#fdd">    return false;</span>
+  }
 
-<span style = "background-color:#fdd">    if (!placeMove(x, y, current))</span>
-    {
-<span style = "background-color:#fdd">        std::cout &lt;&lt; "Invalid move, try again.\n";
-        return true;</span>
+<span style = "background-color:#fdd">  if (board_.isFull()) {
+    board_.print();
+    std::cout &lt;&lt; "It's a draw.\n";
+    return false;</span>
+  }
+
+<span style = "background-color:#fdd">  return true;
+}</span>
+
+<span style = "background-color:#dfd">void Game::initWithPlayers(const std::vector&lt;char&gt; &amp;players) {
+  players_ = players;
+  currentPlayer_ = 0;
+  board_.resize(boardSize(players_.size()));</span>
+
+<span style = "background-color:#dfd">  teams_.clear();
+  teamsMode_ = false;
+  currentTeam_ = inChunkUsed_ = 0;
+  chunkSize_ = 1;
+}</span>
+
+<span style = "background-color:#dfd">void Game::enableTeams(const std::vector&lt;std::vector&lt;char&gt;&gt; &amp;teams) {
+  std::vector&lt;char&gt; flat;
+  for (auto &amp;t : teams)
+    flat.insert(flat.end(), t.begin(), t.end());</span>
+
+  auto has = [&amp;](char c) {
+<span style = "background-color:#dfd">    return std::find(players_.begin(), players_.end(), c) != players_.end();
+  };
+  for (char c : flat) {
+    (void)has(c);
+  }</span>
+
+<span style = "background-color:#dfd">  std::size_t mx = 1;
+  teams_.clear();
+  teams_.reserve(teams.size());
+  for (auto &amp;t : teams) {
+    Team T;
+    T.members = t;
+    T.memberIndex = 0;
+    teams_.push_back(std::move(T));
+    if (t.size() &gt; mx)
+      mx = t.size();
+  }
+  chunkSize_ = mx;
+  teamsMode_ = true;
+  currentTeam_ = 0;
+  inChunkUsed_ = 0;
+  playerToTeam_.clear();
+  for (std::size_t ti = 0; ti &lt; teams_.size(); ++ti) {
+    for (char c : teams_[ti].members) {
+      playerToTeam_[c] = ti;
     }
+  }
+}</span>
 
-<span style = "background-color:#fdd">    char winner = checkWinner();
-    if (winner != ' ')</span>
-    {
-<span style = "background-color:#fdd">        board_.print();
-        std::cout &lt;&lt; "Player " &lt;&lt; winner &lt;&lt; " wins!\n";
-        return false;</span>
-    }
+<span style = "background-color:#dfd">char Game::nextScheduledPlayer() {
+  if (!teamsMode_) {</span>
+<span style = "background-color:#fdd">    char p = players_[currentPlayer_];
+    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
+    return p;</span>
+  }
+<span style = "background-color:#dfd">  if (inChunkUsed_ &gt;= chunkSize_) {
+    inChunkUsed_ = 0;
+    currentTeam_ = (currentTeam_ + 1) % teams_.size();</span>
+  }
+<span style = "background-color:#dfd">  Team &amp;T = teams_[currentTeam_];
+  char player = T.members[T.memberIndex];
+  T.memberIndex = (T.memberIndex + 1) % T.members.size();
+  ++inChunkUsed_;
+  return player;
+}</span>
 
-<span style = "background-color:#fdd">    if (board_.isFull())</span>
-    {
-<span style = "background-color:#fdd">        board_.print();
-        std::cout &lt;&lt; "It's a draw.\n";
-        return false;</span>
-    }
-
-<span style = "background-color:#fdd">    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
-    return true;
-}</span></pre>
+<span style = "background-color:#dfd">int Game::teamIndexOf(char c) const {
+  if (c == ' ')
+    return -1;
+  if (!teamsMode_)
+    return static_cast&lt;int&gt;(c);</span>
+<span style = "background-color:#fdd">  auto it = playerToTeam_.find(c);
+  if (it == playerToTeam_.end())
+    return static_cast&lt;int&gt;(c);
+  return static_cast&lt;int&gt;(it-&gt;second);</span>
+<span style = "background-color:#dfd">}</span></pre>
         <hr />
         <table width="100%">
             <thead>

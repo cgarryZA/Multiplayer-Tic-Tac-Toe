@@ -26,6 +26,11 @@ bool Game::isBadBoardChar(char ch) {
 }
 
 std::vector<char> Game::generateRandomSymbols(int count) {
+  return generateRandomSymbols(count, {});
+}
+
+std::vector<char>
+Game::generateRandomSymbols(int count, const std::vector<char> &extraPool) {
   std::vector<char> result;
   result.reserve(count);
 
@@ -47,6 +52,9 @@ std::vector<char> Game::generateRandomSymbols(int count) {
       pool.push_back(ch);
     }
   };
+
+  for (char ch : extraPool)
+    push_if_ok(ch);
 
   for (char ch = 'A'; ch <= 'Z'; ++ch)
     push_if_ok(ch);

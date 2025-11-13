@@ -74,3 +74,20 @@ TEST_CASE("checkWinner detects diagonal win") {
   CHECK(g.placeMove(2, 0, 'O'));
   CHECK(g.checkWinner() == 'O');
 }
+
+TEST_CASE("init clamps player count to MIN_PLAYERS") {
+  Game g;
+  g.init(1); // should clamp to 2 players → board size 3
+
+  CHECK(g.placeMove(2, 2, 'X') == true);  // (2,2) valid only if size >= 3
+  CHECK(g.placeMove(3, 3, 'O') == false); // (3,3) must be out of bounds
+}
+
+TEST_CASE("generateRandomSymbols skips bad board chars") {
+  std::vector<char> extra = {'|'};
+  auto symbols = Game::generateRandomSymbols(3, extra);
+
+  for (char c : symbols) {
+    CHECK(c != '|');
+  }
+}

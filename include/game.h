@@ -28,6 +28,13 @@ public:
 
   const std::vector<char> &players() const { return players_; }
 
+  static std::vector<char>
+  generateRandomSymbols(int count, const std::vector<char> &extraPool);
+  struct Team {
+    std::vector<char> members;
+    std::size_t memberIndex = 0;
+  };
+
 private:
   std::unordered_map<char, std::size_t> playerToTeam_;
 
@@ -36,11 +43,6 @@ private:
   static bool isBadBoardChar(char ch);
 
   static std::vector<char> generateRandomSymbols(int count);
-
-  struct Team {
-    std::vector<char> members;
-    std::size_t memberIndex = 0;
-  };
 
   std::vector<Team> teams_;
   std::size_t currentTeam_ = 0;
