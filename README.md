@@ -19,7 +19,7 @@ Each player takes a turn placing a symbol on the board until the board is full o
 
 ## Features
 - Multiplayer N-player mode
-- Dynamic board scaling (N+1 x N+1)
+- Dynamic board scaling (N+1) x (N+1)
 - Supports teams mode (optional)
 - Move validation and win detection
 - Fully unit tested (100% coverage)
@@ -53,7 +53,7 @@ Player A move (x y): 2 0
 - Players may be grouped into teams before the game starts
 - Teams act as “super-players”: any member of a team placing a piece contributes toward that team’s win condition 
 - Turn order cycles by team rather than by player
-- Teams with fewer members automatically receive repeated turns so that each team gets an equal-sized “chunk” of moves
+- Teams with fewer members automatically receive repeated turns so that each team gets an equal number of moves
 - A team wins when all symbols placed by that team form a complete row, column, or diagonal
 
 ## Project Structure
