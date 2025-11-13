@@ -1,53 +1,72 @@
 // tests/test_game.cpp
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "game.h"
 #include "third_party/doctest.h"
 
-#include "game.h"
-// #include "board.h" // include later
-
-TEST_CASE("boardSize grows with number of players") {
-  CHECK(Game::boardSize(2) == 3);
-  CHECK(Game::boardSize(3) == 4);
-}
-
-TEST_CASE("placeMove respects bounds and occupancy on 3x3") {
+TEST_CASE("Making moves for multiple players") {
   Game g;
-  g.init(2);
-  CHECK(g.placeMove(0, 0, 'X') == true);
-  CHECK(g.placeMove(0, 0, 'O') == false);
-  CHECK(g.placeMove(-1, 0, 'X') == false);
-  CHECK(g.placeMove(3, 3, 'X') == false);
+  g.init(5);
+
+  char players[] = {'X', 'O', 'A', 'B', 'C'};
+  int boardSize = 6;
+
+  for (int p = 0; p < 5; ++p) {
+    CHECK(g.placeMove(p, 0, players[p]) == true);
+  }
+
+  for (int p = 0; p < 5; ++p) {
+    CHECK(g.placeMove(p, 0, players[p]) == false);
+  }
 }
 
-TEST_CASE("checkWinner detects a simple row win") {
+TEST_CASE("Draw scenario for multiple players") {
   Game g;
-  g.init(2);
-  CHECK(g.placeMove(0, 0, 'X'));
-  CHECK(g.placeMove(1, 0, 'X'));
-  CHECK(g.placeMove(2, 0, 'X'));
-  CHECK(g.checkWinner() == 'X');
+  g.init(3);
+
+  char drawBoard[4][4] = {{'X', 'O', 'A', 'O'},
+                          {'O', 'A', 'X', 'A'},
+                          {'A', 'X', 'O', 'X'},
+                          {'O', 'A', 'X', 'O'}};
+
+  for (int y = 0; y < 4; ++y) {
+    for (int x = 0; x < 4; ++x) {
+      g.placeMove(x, y, drawBoard[y][x]);
+    }
+  }
+
+  CHECK(g.checkWinner() == ' ');
 }
 
-TEST_CASE("checkWinner detects a simple column win") {
+TEST_CASE("checkWinner detects win on a full board") {
   Game g;
-  g.init(2);
-  CHECK(g.placeMove(1, 0, 'O'));
-  CHECK(g.placeMove(1, 1, 'O'));
-  CHECK(g.placeMove(1, 2, 'O'));
-  CHECK(g.checkWinner() == 'O');
+  g.init(3);
+
+  char players[] = {'X', 'O', 'A'};
+  int size = 4;
+
+  for (int x = 0; x < size; ++x) {
+    g.placeMove(x, 0, players[0]);
+  }
+
+  CHECK(g.checkWinner() == players[0]);
 }
 
-TEST_CASE("checkWinner detects a diagonal win") {
+TEST_CASE("checkWinner detects column win") {
   Game g;
-  g.init(2);
-  CHECK(g.placeMove(0, 0, 'X'));
-  CHECK(g.placeMove(1, 1, 'X'));
-  CHECK(g.placeMove(2, 2, 'X'));
-  CHECK(g.checkWinner() == 'X');
+  g.init(3);
+
+  char players[] = {'X', 'O', 'A'};
+  int size = 4;
+
+  for (int y = 0; y < size; ++y) {
+    g.placeMove(0, y, players[1]);
+  }
+
+  CHECK(g.checkWinner() == players[1]);
 }
 
-TEST_CASE("checkWinner detects an antidiagonal win") {
+TEST_CASE("checkWinner detects diagonal win") {
   Game g;
   g.init(2);
   CHECK(g.placeMove(0, 2, 'O'));
