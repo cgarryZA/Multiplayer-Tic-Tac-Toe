@@ -1,0 +1,30 @@
+PHASE 1
+Task allocations after initial meeting 7/11/25 6:00pm
+
+Louis:
+	Base test environment
+Christian:
+	Base game logic
+Matt:
+	Base build system
+	Base CI github actions
+Ailis:
+	Github readme according the coursework spec
+
+PHASE 2
+Task allocations after second meeting 11/11/25 1:00pm
+
+Louis:
+	game.cpp tests
+
+Christian:
+	main.cpp tests
+	Adding test coverage
+
+Matt:
+	Both header file tests
+	Adding test driven multi-team feature
+
+Ailis:
+	board.cpp tests
+	Add bash commands to readme

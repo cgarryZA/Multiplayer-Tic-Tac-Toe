@@ -1,3 +1,5 @@
+// tests/test_game.cpp
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "game.h"
 #include "third_party/doctest.h"
@@ -66,14 +68,9 @@ TEST_CASE("checkWinner detects column win") {
 
 TEST_CASE("checkWinner detects diagonal win") {
   Game g;
-  g.init(3);
-
-  char players[] = {'X', 'O', 'A'};
-  int size = 4;
-
-  for (int i = 0; i < size; ++i) {
-    g.placeMove(i, i, players[2]);
-  }
-
-  CHECK(g.checkWinner() == players[2]);
-} 
+  g.init(2);
+  CHECK(g.placeMove(0, 2, 'O'));
+  CHECK(g.placeMove(1, 1, 'O'));
+  CHECK(g.placeMove(2, 0, 'O'));
+  CHECK(g.checkWinner() == 'O');
+}

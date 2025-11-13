@@ -1,4 +1,5 @@
-// game.cpp
+// src/game.cpp
+
 #include "game.h"
 #include <algorithm>
 #include <iostream>
@@ -36,14 +37,21 @@ std::vector<char> Game::generateRandomSymbols(int count) {
     return result;
 
   std::vector<char> pool;
-  for (int c = 33; c <= 126; ++c) {
-    char ch = static_cast<char>(c);
+
+  auto push_if_ok = [&](char ch) {
     if (isBadBoardChar(ch))
-      continue;
+      return;
     if (ch == 'X' || ch == 'O')
-      continue;
-    pool.push_back(ch);
-  }
+      return;
+    if (std::isalpha(static_cast<unsigned char>(ch))) {
+      pool.push_back(ch);
+    }
+  };
+
+  for (char ch = 'A'; ch <= 'Z'; ++ch)
+    push_if_ok(ch);
+  for (char ch = 'a'; ch <= 'z'; ++ch)
+    push_if_ok(ch);
 
   static std::random_device rd;
   static std::mt19937 gen(rd());
@@ -74,71 +82,75 @@ char Game::checkWinner() const {
 
   // rows
   for (std::size_t y = 0; y < size; ++y) {
-    char first = board_.get(0, y);
-    if (first == ' ')
+    char c0 = board_.get(0, y);
+    int t0 = teamIndexOf(c0);
+    if (t0 == -1)
       continue;
     bool allSame = true;
-    for (std::size_t x = 1; x < size; ++x)
-      if (board_.get(x, y) != first) {
+    for (std::size_t x = 1; x < size; ++x) {
+      if (teamIndexOf(board_.get(x, y)) != t0) {
         allSame = false;
         break;
       }
+    }
     if (allSame)
-      return first;
+      return c0;
   }
 
-  // cols
   for (std::size_t x = 0; x < size; ++x) {
-    char first = board_.get(x, 0);
-    if (first == ' ')
+    char c0 = board_.get(x, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 == -1)
       continue;
     bool allSame = true;
-    for (std::size_t y = 1; y < size; ++y)
-      if (board_.get(x, y) != first) {
+    for (std::size_t y = 1; y < size; ++y) {
+      if (teamIndexOf(board_.get(x, y)) != t0) {
         allSame = false;
         break;
       }
+    }
     if (allSame)
-      return first;
+      return c0;
   }
 
-  // main diag
   {
-    char first = board_.get(0, 0);
-    if (first != ' ') {
+    char c0 = board_.get(0, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 != -1) {
       bool allSame = true;
-      for (std::size_t i = 1; i < size; ++i)
-        if (board_.get(i, i) != first) {
+      for (std::size_t i = 1; i < size; ++i) {
+        if (teamIndexOf(board_.get(i, i)) != t0) {
           allSame = false;
           break;
         }
+      }
       if (allSame)
-        return first;
+        return c0;
     }
   }
 
-  // anti diag
   {
-    char first = board_.get(size - 1, 0);
-    if (first != ' ') {
+    char c0 = board_.get(size - 1, 0);
+    int t0 = teamIndexOf(c0);
+    if (t0 != -1) {
       bool allSame = true;
-      for (std::size_t i = 1; i < size; ++i)
-        if (board_.get(size - 1 - i, i) != first) {
+      for (std::size_t i = 1; i < size; ++i) {
+        if (teamIndexOf(board_.get(size - 1 - i, i)) != t0) {
           allSame = false;
           break;
         }
+      }
       if (allSame)
-        return first;
+        return c0;
     }
   }
-
   return ' ';
 }
 
 bool Game::playTurn() {
   board_.print();
 
-  char current = players_[currentPlayer_];
+  char current = nextScheduledPlayer();
   std::cout << "Player " << current << " move (x y): ";
 
   int x, y;
@@ -155,7 +167,12 @@ bool Game::playTurn() {
   char winner = checkWinner();
   if (winner != ' ') {
     board_.print();
-    std::cout << "Player " << winner << " wins!\n";
+    if (teamsMode_) {
+      int tid = teamIndexOf(winner);
+      std::cout << "Team " << tid << " wins \n";
+    } else {
+      std::cout << "Player " << winner << " wins!\n";
+    }
     return false;
   }
 
@@ -165,6 +182,79 @@ bool Game::playTurn() {
     return false;
   }
 
-  currentPlayer_ = (currentPlayer_ + 1) % players_.size();
   return true;
+}
+
+void Game::initWithPlayers(const std::vector<char> &players) {
+  players_ = players;
+  currentPlayer_ = 0;
+  board_.resize(boardSize(players_.size()));
+
+  teams_.clear();
+  teamsMode_ = false;
+  currentTeam_ = inChunkUsed_ = 0;
+  chunkSize_ = 1;
+}
+
+void Game::enableTeams(const std::vector<std::vector<char>> &teams) {
+  std::vector<char> flat;
+  for (auto &t : teams)
+    flat.insert(flat.end(), t.begin(), t.end());
+
+  auto has = [&](char c) {
+    return std::find(players_.begin(), players_.end(), c) != players_.end();
+  };
+  for (char c : flat) {
+    (void)has(c);
+  }
+
+  std::size_t mx = 1;
+  teams_.clear();
+  teams_.reserve(teams.size());
+  for (auto &t : teams) {
+    Team T;
+    T.members = t;
+    T.memberIndex = 0;
+    teams_.push_back(std::move(T));
+    if (t.size() > mx)
+      mx = t.size();
+  }
+  chunkSize_ = mx;
+  teamsMode_ = true;
+  currentTeam_ = 0;
+  inChunkUsed_ = 0;
+  playerToTeam_.clear();
+  for (std::size_t ti = 0; ti < teams_.size(); ++ti) {
+    for (char c : teams_[ti].members) {
+      playerToTeam_[c] = ti;
+    }
+  }
+}
+
+char Game::nextScheduledPlayer() {
+  if (!teamsMode_) {
+    char p = players_[currentPlayer_];
+    currentPlayer_ = (currentPlayer_ + 1) % players_.size();
+    return p;
+  }
+  if (inChunkUsed_ >= chunkSize_) {
+    inChunkUsed_ = 0;
+    currentTeam_ = (currentTeam_ + 1) % teams_.size();
+  }
+  Team &T = teams_[currentTeam_];
+  char player = T.members[T.memberIndex];
+  T.memberIndex = (T.memberIndex + 1) % T.members.size();
+  ++inChunkUsed_;
+  return player;
+}
+
+int Game::teamIndexOf(char c) const {
+  if (c == ' ')
+    return -1;
+  if (!teamsMode_)
+    return static_cast<int>(c);
+  auto it = playerToTeam_.find(c);
+  if (it == playerToTeam_.end())
+    return static_cast<int>(c);
+  return static_cast<int>(it->second);
 }
