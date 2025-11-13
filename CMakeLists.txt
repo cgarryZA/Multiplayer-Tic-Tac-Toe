@@ -12,7 +12,11 @@ option(BUILD_TESTS "Build unit tests" ON)
 option(ENABLE_COVERAGE "Enable coverage flags" OFF)
 
 if (ENABLE_COVERAGE)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-O0 -g)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+        add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+        add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         add_compile_options(--coverage -O0 -g)
         add_link_options(--coverage)
     endif()
@@ -38,9 +42,13 @@ if (BUILD_TESTS)
     add_executable(unit_tests
         tests/test_game.cpp
         tests/test_app.cpp
-        tests/test_app_header.cpp
         tests/test_teams.cpp
-        tests/test_board.cpp
+
+        
+        tests/test_app_header.cpp
+        tests/test_board_header.cpp
+        tests/test_codes_header.cpp
+        tests/test_game_header.cpp
     )
     target_include_directories(unit_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tests
@@ -49,4 +57,40 @@ if (BUILD_TESTS)
 
     add_test(NAME unit_all COMMAND unit_tests)
     add_test(NAME unit_app_only COMMAND unit_tests --test-case "app:*")
+endif()
+
+# Files to run clang-format on
+set(ALL_CODE
+    src/app.cpp
+    src/board.cpp
+    src/game.cpp
+    src/main.cpp
+
+    include/app.h
+    include/board.h
+    include/codes.h
+    include/game.h
+
+    tests/test_app.cpp
+    tests/test_game.cpp
+    tests/test_teams.cpp
+    
+    tests/test_app_header.cpp
+    tests/test_board_header.cpp
+    tests/test_codes_header.cpp
+    tests/test_game_header.cpp
+)
+
+find_program(CLANG_FORMAT_EXE NAMES clang-format)
+if (CLANG_FORMAT_EXE)
+  add_custom_target(format-check
+    COMMAND ${CLANG_FORMAT_EXE} -n -Werror --style=file ${ALL_CODE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running clang-format check"
+  )
+  add_custom_target(format
+    COMMAND ${CLANG_FORMAT_EXE} -i --style=file ${ALL_CODE}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Applying clang-format"
+  )
 endif()

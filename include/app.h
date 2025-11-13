@@ -1,10 +1,9 @@
 // include/app.h
 
 #pragma once
-#include <iosfwd>
 #include <functional>
+#include <iosfwd>
 
-int run_app(std::istream& in,
-            std::ostream& out,
-            const std::function<bool(int players)>& init_fn,
-            const std::function<bool()>& turn_fn);
+int run_app(std::istream &in, std::ostream &out,
+            const std::function<bool(int players)> &init_fn,
+            const std::function<bool()> &turn_fn);
